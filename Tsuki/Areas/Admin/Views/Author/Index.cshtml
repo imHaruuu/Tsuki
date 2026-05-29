@@ -1,4 +1,4 @@
-@model IEnumerable<Tsuki.Models.Author>
+@model IEnumerable<Author>
 @{
     ViewData["Title"] = "Manage Authors";
 }
@@ -15,20 +15,46 @@
 
 <div class="admin-table">
     <table class="table mb-0">
-        <thead><tr><th>Name</th><th>Novels</th><th>Bio</th><th style="width:110px">Actions</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Novels</th>
+                <th>Bio</th>
+                <th style="width:110px">Actions</th>
+            </tr>
+        </thead>
         <tbody>
             @foreach (var a in Model)
             {
                 <tr>
-                    <td><strong>@a.Name</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrEmpty(a.AvatarUrl))
+                            {
+                                <img src="@a.AvatarUrl" alt="@a.Name avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center bg-secondary text-white" style="width: 32px; height: 32px; border-radius: 50%; font-size: 0.8rem; border: 1px solid var(--border-color);">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            }
+                            <strong>@a.Name</strong>
+                        </div>
+                    </td>
                     <td>@a.Novels.Count</td>
                     <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@a.Bio</td>
                     <td>
                         <div class="d-flex gap-1">
-                            <a asp-action="Edit" asp-route-id="@a.Id" class="tsuki-btn-ghost btn-sm"><i class="bi bi-pencil"></i></a>
-                            <form asp-action="Delete" asp-route-id="@a.Id" method="post" onsubmit="return confirm('Delete author?')">
+                            <a asp-action="Edit" asp-route-id="@a.Id" class="tsuki-btn-ghost btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@a.Id" method="post"
+                                  onsubmit="return confirm('Delete this author?')">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="tsuki-btn-ghost btn-sm" style="color:#f06878;border-color:#f06878;"><i class="bi bi-trash"></i></button>
+                                <button type="submit" class="tsuki-btn-ghost btn-sm" style="color:#f06878;border-color:#f06878;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </form>
                         </div>
                     </td>

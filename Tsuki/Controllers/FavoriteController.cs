@@ -14,7 +14,7 @@ namespace Tsuki.Controllers
             _favoriteService = favoriteService;
         }
 
-        // POST: /Favorite/Toggle  (HTMX endpoint — returns partial view)
+        // POST: /Favorite/Toggle  (HTMX endpoint — returns _FavoriteButton partial)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Toggle(int novelId)
@@ -24,10 +24,12 @@ namespace Tsuki.Controllers
 
             var isFavorited = await _favoriteService.ToggleFavoriteAsync(userId, novelId);
 
-            // Return the updated favorite button partial
-            ViewBag.NovelId = novelId;
+            // Pass state to the partial via ViewBag
+            ViewBag.NovelId    = novelId;
             ViewBag.IsFavorited = isFavorited;
-            return PartialView("_FavoriteButton");
+
+            // Return just the button HTML for HTMX to swap in
+            return PartialView("~/Views/Shared/_FavoriteButton.cshtml");
         }
     }
 }

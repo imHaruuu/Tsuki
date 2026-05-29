@@ -1,11 +1,18 @@
-@model Tsuki.ViewModels.NovelCardViewModel
+@model NovelCardViewModel
 @{
-    string statusClass = Model.Status switch {
-        Tsuki.Models.NovelStatus.Ongoing   => "status-ongoing",
-        Tsuki.Models.NovelStatus.Completed => "status-completed",
-        Tsuki.Models.NovelStatus.Hiatus    => "status-hiatus",
-        _                                  => "status-ongoing"
-    };
+    string statusClass;
+    switch (Model.Status)
+    {
+        case NovelStatus.Completed:
+            statusClass = "status-completed";
+            break;
+        case NovelStatus.Hiatus:
+            statusClass = "status-hiatus";
+            break;
+        default:
+            statusClass = "status-ongoing";
+            break;
+    }
     string statusText = Model.Status.ToString();
 }
 

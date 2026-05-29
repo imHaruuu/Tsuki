@@ -775,30 +775,46 @@ img { max-width: 100%; }
     overflow: hidden;
 }
 
-.admin-table table { margin: 0; }
+.admin-table table {
+    margin: 0;
+    /* Override Bootstrap's default dark text on white background */
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-primary);
+    --bs-table-striped-bg: transparent;
+    --bs-table-hover-bg: transparent;
+    color: var(--text-primary) !important;
+}
 
 .admin-table thead th {
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
+    background: var(--bg-elevated) !important;
+    color: var(--text-secondary) !important;
     font-size: 0.78rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color) !important;
+    border-color: var(--border-color) !important;
     padding: 0.85rem 1rem;
 }
 
+.admin-table tbody tr {
+    background: transparent !important;
+    border-color: var(--border-color) !important;
+}
+
 .admin-table tbody td {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color) !important;
+    border-color: var(--border-color) !important;
     padding: 0.8rem 1rem;
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
+    background: transparent !important;
     font-size: 0.875rem;
     vertical-align: middle;
 }
 
-.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tbody tr:last-child td { border-bottom: none !important; }
 
-.admin-table tbody tr:hover td { background: rgba(255,255,255,0.025); }
+.admin-table tbody tr:hover td { background: rgba(255,255,255,0.04) !important; }
 
 /* ── Pagination ──────────────────────────────────────────────── */
 .tsuki-pagination {

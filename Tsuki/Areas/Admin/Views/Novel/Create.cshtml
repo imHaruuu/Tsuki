@@ -1,10 +1,12 @@
-@model Tsuki.ViewModels.Admin.CreateNovelViewModel
+@model CreateNovelViewModel
 @{
     ViewData["Title"] = ViewBag.NovelId != null ? "Edit Novel" : "Add Novel";
-    bool isEdit = ViewBag.NovelId != null;
+    bool isEdit       = ViewBag.NovelId != null;
     string formAction = isEdit ? "Edit" : "Create";
     string pageTitle  = isEdit ? "Edit Novel" : "Add Novel";
     string btnLabel   = isEdit ? "Save Changes" : "Create Novel";
+    var authorList    = new SelectList(Model.AvailableAuthors, "Id", "Name");
+    var statusList    = Html.GetEnumSelectList<NovelStatus>();
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
@@ -15,7 +17,7 @@
 </div>
 
 <div style="max-width:700px;">
-    <form asp-action="@formAction" asp-route-id="@ViewBag.NovelId" method="post" id="novel-form">
+    <form asp-action="@formAction" asp-route-id="@ViewBag.NovelId" method="post" id="novel-form" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
 
         <div class="row g-3">
@@ -27,8 +29,7 @@
 
             <div class="col-md-6">
                 <label asp-for="AuthorId" class="form-label"></label>
-                <select asp-for="AuthorId" class="form-select"
-                        asp-items="@(new SelectList(Model.AvailableAuthors, "Id", "Name"))">
+                <select asp-for="AuthorId" class="form-select" asp-items="@authorList">
                     <option value="">— Select Author —</option>
                 </select>
                 <span asp-validation-for="AuthorId" class="text-danger"></span>
@@ -36,14 +37,63 @@
 
             <div class="col-md-6">
                 <label asp-for="Status" class="form-label"></label>
-                <select asp-for="Status" class="form-select"
-                        asp-items="Html.GetEnumSelectList<Tsuki.Models.NovelStatus>()">
+                <select asp-for="Status" class="form-select" asp-items="@statusList">
                 </select>
             </div>
 
             <div class="col-12">
-                <label asp-for="CoverUrl" class="form-label"></label>
-                <input asp-for="CoverUrl" class="form-control" placeholder="/images/covers/mynovel.jpg" />
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label d-flex align-items-center gap-2">
+                            <i class="bi bi-image text-gold"></i> Cover Image Source
+                        </label>
+                        
+                        <!-- Tab Navigation for Image Input Mode -->
+                        <ul class="nav nav-tabs border-bottom border-secondary mb-3" id="imageSourceTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active text-white border-0 bg-transparent px-3 py-2" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-pane" type="button" role="tab" aria-controls="upload-pane" aria-selected="true" style="font-size: 0.9rem;">
+                                    <i class="bi bi-upload me-1"></i> Upload File
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-muted border-0 bg-transparent px-3 py-2" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-pane" type="button" role="tab" aria-controls="url-pane" aria-selected="false" style="font-size: 0.9rem;">
+                                    <i class="bi bi-link-45deg me-1"></i> Image URL
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="imageSourceTabContent">
+                            <!-- File Upload Pane -->
+                            <div class="tab-pane fade show active" id="upload-pane" role="tabpanel" aria-labelledby="upload-tab">
+                                <input type="file" asp-for="CoverImage" class="form-control bg-dark border-secondary text-white" accept="image/*" id="coverImageFile" />
+                                <span asp-validation-for="CoverImage" class="text-danger small mt-1 d-block"></span>
+                                <small class="text-muted d-block mt-1">Accepted: JPG, JPEG, PNG, WEBP. Max size: 5MB.</small>
+                            </div>
+                            
+                            <!-- URL Input Pane -->
+                            <div class="tab-pane fade" id="url-pane" role="tabpanel" aria-labelledby="url-tab">
+                                <input asp-for="CoverUrl" class="form-control bg-dark border-secondary text-white" placeholder="https://example.com/cover.jpg or /images/covers/cover.jpg" id="coverImageUrl" />
+                                <span asp-validation-for="CoverUrl" class="text-danger small mt-1 d-block"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Preview Pane -->
+                    <div class="col-md-4 d-flex flex-column align-items-center">
+                        <label class="form-label align-self-start"><i class="bi bi-eye text-gold"></i> Live Preview</label>
+                        <div class="preview-container d-flex align-items-center justify-content-center border border-secondary shadow-sm" style="width: 140px; height: 210px; border-radius: var(--radius-sm); background: var(--bg-elevated); overflow: hidden; position: relative;">
+                            <img id="coverPreview" src="@(string.IsNullOrEmpty(Model.CoverUrl) ? "" : Model.CoverUrl)" alt="Cover preview" class="w-100 h-100 @(string.IsNullOrEmpty(Model.CoverUrl) ? "d-none" : "")" style="object-fit: cover; transition: all 0.3s ease;" />
+                            <div id="previewPlaceholder" class="text-center @(string.IsNullOrEmpty(Model.CoverUrl) ? "" : "d-none")" style="color: var(--text-muted); padding: 1rem;">
+                                <i class="bi bi-book" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                                <p class="small mb-0 mt-2" style="font-size: 0.75rem;">Standard Cover Aspect Ratio (2:3)</p>
+                            </div>
+                            <!-- Live status indicator -->
+                            <span id="previewStatusBadge" class="position-absolute top-0 end-0 m-2 badge @(string.IsNullOrEmpty(Model.CoverUrl) ? "d-none" : "bg-success text-white")" style="font-size: 0.65rem; border-radius: 4px;">
+                                @(string.IsNullOrEmpty(Model.CoverUrl) ? "Unsaved" : "Current Cover")
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="col-12">
@@ -88,6 +138,84 @@
     </form>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_ValidationScriptsPartial" />
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const coverImageFile = document.getElementById('coverImageFile');
+        const coverImageUrl = document.getElementById('coverImageUrl');
+        const coverPreview = document.getElementById('coverPreview');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const statusBadge = document.getElementById('previewStatusBadge');
+
+        const originalUrl = "@Html.Raw(Model.CoverUrl ?? "")";
+
+        function updatePreviewStatus(isUnsaved) {
+            if (isUnsaved) {
+                statusBadge.textContent = "Unsaved Preview";
+                statusBadge.className = "position-absolute top-0 end-0 m-2 badge bg-warning text-dark";
+            } else {
+                if (originalUrl) {
+                    statusBadge.textContent = "Current Cover";
+                    statusBadge.className = "position-absolute top-0 end-0 m-2 badge bg-success text-white";
+                } else {
+                    statusBadge.className = "position-absolute top-0 end-0 m-2 badge d-none";
+                }
+            }
+        }
+
+        coverImageFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    coverPreview.src = event.target.result;
+                    coverPreview.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                    updatePreviewStatus(true);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const urlVal = coverImageUrl.value.trim();
+                if (urlVal) {
+                    coverPreview.src = urlVal;
+                    coverPreview.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                    updatePreviewStatus(urlVal !== originalUrl);
+                } else {
+                    coverPreview.classList.add('d-none');
+                    previewPlaceholder.classList.remove('d-none');
+                    statusBadge.className = "d-none";
+                }
+            }
+        });
+
+        coverImageUrl.addEventListener('input', function(e) {
+            const val = e.target.value.trim();
+            if (!coverImageFile.files.length) {
+                if (val) {
+                    coverPreview.src = val;
+                    coverPreview.classList.remove('d-none');
+                    previewPlaceholder.classList.add('d-none');
+                    updatePreviewStatus(val !== originalUrl);
+                } else {
+                    coverPreview.classList.add('d-none');
+                    previewPlaceholder.classList.remove('d-none');
+                    statusBadge.className = "d-none";
+                }
+            }
+        });
+
+        // Adjust active tab color scheme seamlessly
+        const tabButtons = document.querySelectorAll('#imageSourceTab button');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('shown.bs.tab', function (event) {
+                tabButtons.forEach(b => {
+                    b.classList.remove('text-white');
+                    b.classList.add('text-muted');
+                });
+                event.target.classList.add('text-white');
+                event.target.classList.remove('text-muted');
+            });
+        });
+    });
+</script>

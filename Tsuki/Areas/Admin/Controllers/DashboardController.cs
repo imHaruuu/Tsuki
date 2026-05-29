@@ -20,6 +20,16 @@ namespace Tsuki.Areas.Admin.Controllers
         public async Task<IActionResult> Index()
         {
             var users = await _userManager.Users.ToListAsync();
+
+            // Build userId → roles map for the view
+            var rolesMap = new Dictionary<string, List<string>>();
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                rolesMap[user.Id] = roles.ToList();
+            }
+
+            ViewBag.UserRoles = rolesMap;
             return View(users);
         }
     }

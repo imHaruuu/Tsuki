@@ -1,4 +1,4 @@
-@model Tsuki.ViewModels.Admin.CreateCategoryViewModel
+@model CreateCategoryViewModel
 @{
     ViewData["Title"] = ViewBag.CategoryId != null ? "Edit Category" : "Add Category";
     bool isEdit       = ViewBag.CategoryId != null;
@@ -8,7 +8,9 @@
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
-    <a asp-action="Index" class="tsuki-btn-ghost"><i class="bi bi-arrow-left me-1"></i> Back</a>
+    <a asp-action="Index" class="tsuki-btn-ghost">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
     <h1 class="section-title mb-0">@pageTitle</h1>
 </div>
 

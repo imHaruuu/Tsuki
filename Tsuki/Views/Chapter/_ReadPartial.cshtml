@@ -1,6 +1,5 @@
 @model ChapterReadViewModel
 @{
-    ViewData["Title"] = $"Ch.{Model.ChapterNumber} — {Model.NovelTitle}";
     string prevUrl = Model.PrevChapterId.HasValue
         ? Url.Action("Read", "Chapter", new { id = Model.PrevChapterId }) ?? "#"
         : "#";
@@ -13,11 +12,11 @@
 <div class="reader-wrap" id="reader-wrap">
     <!-- Breadcrumb -->
     <nav class="reader-breadcrumb" aria-label="breadcrumb">
-        <a asp-controller="Home" asp-action="Index">Home</a>
+        <a href="/">Home</a>
         <span class="mx-2">›</span>
-        <a asp-controller="Novel" asp-action="Index">Novels</a>
+        <a href="/Novel">Novels</a>
         <span class="mx-2">›</span>
-        <a asp-controller="Novel" asp-action="Detail" asp-route-id="@Model.NovelId">@Model.NovelTitle</a>
+        <a href="@novelUrl">@Model.NovelTitle</a>
         <span class="mx-2">›</span>
         <span style="color:var(--text-primary)">Chapter @Model.ChapterNumber</span>
     </nav>
@@ -32,7 +31,7 @@
                hx-swap="outerHTML"
                hx-push-url="true"
                hx-indicator="#reader-indicator"
-               class="reader-nav-btn prev" id="btn-prev-chapter">
+               class="reader-nav-btn prev">
                 <i class="bi bi-chevron-left"></i> Ch.@Model.PrevChapterNumber
             </a>
         }
@@ -41,7 +40,7 @@
             <span></span>
         }
 
-        <a href="@novelUrl" class="tsuki-btn-ghost" id="btn-back-to-novel">
+        <a href="@novelUrl" class="tsuki-btn-ghost">
             <i class="bi bi-list-ul me-1"></i>Chapter List
         </a>
 
@@ -53,7 +52,7 @@
                hx-swap="outerHTML"
                hx-push-url="true"
                hx-indicator="#reader-indicator"
-               class="reader-nav-btn next" id="btn-next-chapter">
+               class="reader-nav-btn next">
                 Ch.@Model.NextChapterNumber <i class="bi bi-chevron-right"></i>
             </a>
         }
@@ -117,10 +116,13 @@
             <div class="text-center" style="color:var(--text-muted);font-size:0.875rem;">
                 <i class="bi bi-check-circle me-1 text-gold"></i>
                 You've reached the last available chapter!
-                <a asp-controller="Novel" asp-action="Detail" asp-route-id="@Model.NovelId" class="d-block mt-2 tsuki-btn-outline">
-                    Back to Novel
-                </a>
+                <a href="@novelUrl" class="d-block mt-2 tsuki-btn-outline">Back to Novel</a>
             </div>
         }
     </div>
 </div>
+
+<script>
+    // Scroll to top on HTMX chapter swap
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+</script>

@@ -1,4 +1,4 @@
-@model Tsuki.ViewModels.Admin.CreateAuthorViewModel
+@model CreateAuthorViewModel
 @{
     ViewData["Title"] = ViewBag.AuthorId != null ? "Edit Author" : "Add Author";
     bool isEdit       = ViewBag.AuthorId != null;
@@ -8,22 +8,69 @@
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
-    <a asp-action="Index" class="tsuki-btn-ghost"><i class="bi bi-arrow-left me-1"></i> Back</a>
+    <a asp-action="Index" class="tsuki-btn-ghost">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
     <h1 class="section-title mb-0">@pageTitle</h1>
 </div>
 
 <div style="max-width:500px;">
-    <form asp-action="@formAction" asp-route-id="@ViewBag.AuthorId" method="post">
+    <form asp-action="@formAction" asp-route-id="@ViewBag.AuthorId" method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
         <div class="row g-3">
             <div class="col-12">
                 <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" placeholder="Author's name" />
+                <input asp-for="Name" class="form-control" placeholder="Author name" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="col-12">
-                <label asp-for="AvatarUrl" class="form-label"></label>
-                <input asp-for="AvatarUrl" class="form-control" placeholder="/images/avatars/author.jpg" />
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label d-flex align-items-center gap-2">
+                            <i class="bi bi-person-badge text-gold"></i> Avatar Image Source
+                        </label>
+                        
+                        <ul class="nav nav-tabs border-bottom border-secondary mb-3" id="avatarSourceTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active text-white border-0 bg-transparent px-3 py-2" id="author-upload-tab" data-bs-toggle="tab" data-bs-target="#author-upload-pane" type="button" role="tab" aria-controls="author-upload-pane" aria-selected="true" style="font-size: 0.9rem;">
+                                    <i class="bi bi-upload me-1"></i> Upload File
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-muted border-0 bg-transparent px-3 py-2" id="author-url-tab" data-bs-toggle="tab" data-bs-target="#author-url-pane" type="button" role="tab" aria-controls="author-url-pane" aria-selected="false" style="font-size: 0.9rem;">
+                                    <i class="bi bi-link-45deg me-1"></i> Avatar URL
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="avatarSourceTabContent">
+                            <div class="tab-pane fade show active" id="author-upload-pane" role="tabpanel" aria-labelledby="author-upload-tab">
+                                <input type="file" asp-for="AvatarImage" class="form-control bg-dark border-secondary text-white" accept="image/*" id="avatarImageFile" />
+                                <span asp-validation-for="AvatarImage" class="text-danger small mt-1 d-block"></span>
+                                <small class="text-muted d-block mt-1">Accepted: JPG, JPEG, PNG, WEBP. Max size: 5MB.</small>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="author-url-pane" role="tabpanel" aria-labelledby="author-url-tab">
+                                <input asp-for="AvatarUrl" class="form-control bg-dark border-secondary text-white" placeholder="https://example.com/avatar.jpg or /images/avatars/author.jpg" id="avatarImageUrl" />
+                                <span asp-validation-for="AvatarUrl" class="text-danger small mt-1 d-block"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
+                        <label class="form-label align-self-start"><i class="bi bi-eye text-gold"></i> Live Preview</label>
+                        <div class="preview-container d-flex align-items-center justify-content-center border border-secondary" style="width: 120px; height: 120px; border-radius: 50%; background: var(--bg-elevated); overflow: hidden; position: relative;">
+                            <img id="avatarPreview" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "" : Model.AvatarUrl)" alt="Avatar preview" class="w-100 h-100 @(string.IsNullOrEmpty(Model.AvatarUrl) ? "d-none" : "")" style="object-fit: cover; transition: all 0.3s ease;" />
+                            <div id="avatarPlaceholder" class="text-center @(string.IsNullOrEmpty(Model.AvatarUrl) ? "" : "d-none")" style="color: var(--text-muted);">
+                                <i class="bi bi-person" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                            </div>
+                            <!-- Live status indicator -->
+                            <span id="previewStatusBadge" class="position-absolute top-0 end-0 badge @(string.IsNullOrEmpty(Model.AvatarUrl) ? "d-none" : "bg-success text-white")" style="font-size: 0.65rem; border-radius: 4px; margin: 4px;">
+                                @(string.IsNullOrEmpty(Model.AvatarUrl) ? "Unsaved" : "Current")
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-12">
                 <label asp-for="Bio" class="form-label"></label>
@@ -37,3 +84,84 @@
         </div>
     </form>
 </div>
+
+<partial name="_ValidationScriptsPartial" />
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const avatarImageFile = document.getElementById('avatarImageFile');
+        const avatarImageUrl = document.getElementById('avatarImageUrl');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+        const statusBadge = document.getElementById('previewStatusBadge');
+
+        const originalUrl = "@Html.Raw(Model.AvatarUrl ?? "")";
+
+        function updatePreviewStatus(isUnsaved) {
+            if (isUnsaved) {
+                statusBadge.textContent = "Unsaved";
+                statusBadge.className = "position-absolute top-0 end-0 badge bg-warning text-dark";
+            } else {
+                if (originalUrl) {
+                    statusBadge.textContent = "Current";
+                    statusBadge.className = "position-absolute top-0 end-0 badge bg-success text-white";
+                } else {
+                    statusBadge.className = "position-absolute top-0 end-0 badge d-none";
+                }
+            }
+        }
+
+        avatarImageFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    avatarPreview.src = event.target.result;
+                    avatarPreview.classList.remove('d-none');
+                    avatarPlaceholder.classList.add('d-none');
+                    updatePreviewStatus(true);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const urlVal = avatarImageUrl.value.trim();
+                if (urlVal) {
+                    avatarPreview.src = urlVal;
+                    avatarPreview.classList.remove('d-none');
+                    avatarPlaceholder.classList.add('d-none');
+                    updatePreviewStatus(urlVal !== originalUrl);
+                } else {
+                    avatarPreview.classList.add('d-none');
+                    avatarPlaceholder.classList.remove('d-none');
+                    statusBadge.className = "d-none";
+                }
+            }
+        });
+
+        avatarImageUrl.addEventListener('input', function(e) {
+            const val = e.target.value.trim();
+            if (!avatarImageFile.files.length) {
+                if (val) {
+                    avatarPreview.src = val;
+                    avatarPreview.classList.remove('d-none');
+                    avatarPlaceholder.classList.add('d-none');
+                    updatePreviewStatus(val !== originalUrl);
+                } else {
+                    avatarPreview.classList.add('d-none');
+                    avatarPlaceholder.classList.remove('d-none');
+                    statusBadge.className = "d-none";
+                }
+            }
+        });
+
+        const tabButtons = document.querySelectorAll('#avatarSourceTab button');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('shown.bs.tab', function (event) {
+                tabButtons.forEach(b => {
+                    b.classList.remove('text-white');
+                    b.classList.add('text-muted');
+                });
+                event.target.classList.add('text-white');
+                event.target.classList.remove('text-muted');
+            });
+        });
+    });
+</script>

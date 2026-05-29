@@ -48,6 +48,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<INovelService, NovelService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 // ─── MVC ─────────────────────────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();

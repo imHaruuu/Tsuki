@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using Tsuki.Models;
 
 namespace Tsuki.ViewModels.Admin
@@ -15,6 +16,9 @@ namespace Tsuki.ViewModels.Admin
 
         [Display(Name = "Cover Image URL")]
         public string? CoverUrl { get; set; }
+
+        [Display(Name = "Upload Cover Image")]
+        public IFormFile? CoverImage { get; set; }
 
         [Required]
         [Display(Name = "Status")]
@@ -68,6 +72,9 @@ namespace Tsuki.ViewModels.Admin
 
         [Display(Name = "Avatar URL")]
         public string? AvatarUrl { get; set; }
+
+        [Display(Name = "Upload Avatar Image")]
+        public IFormFile? AvatarImage { get; set; }
     }
 
     public class CreateCategoryViewModel

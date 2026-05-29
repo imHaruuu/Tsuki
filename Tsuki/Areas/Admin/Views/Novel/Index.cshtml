@@ -1,4 +1,4 @@
-@model IEnumerable<Tsuki.Models.Novel>
+@model IEnumerable<Novel>
 @{
     ViewData["Title"] = "Manage Novels";
 }
@@ -29,18 +29,38 @@
         <tbody>
             @foreach (var novel in Model)
             {
-                string sc = novel.Status switch {
-                    Tsuki.Models.NovelStatus.Ongoing   => "status-ongoing",
-                    Tsuki.Models.NovelStatus.Completed => "status-completed",
-                    Tsuki.Models.NovelStatus.Hiatus    => "status-hiatus",
-                    _                                  => ""
-                };
-                string novelTitleEscaped = novel.Title.Replace("'", "\\'");
+                string statusBadge;
+                switch (novel.Status)
+                {
+                    case NovelStatus.Completed:
+                        statusBadge = "status-completed";
+                        break;
+                    case NovelStatus.Hiatus:
+                        statusBadge = "status-hiatus";
+                        break;
+                    default:
+                        statusBadge = "status-ongoing";
+                        break;
+                }
                 <tr>
-                    <td><strong>@novel.Title</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrEmpty(novel.CoverUrl))
+                            {
+                                <img src="@novel.CoverUrl" alt="@novel.Title cover" style="width: 32px; height: 48px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border-color);" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center bg-secondary" style="width: 32px; height: 48px; border-radius: 4px; font-size: 1rem; border: 1px solid var(--border-color);">
+                                    📚
+                                </div>
+                            }
+                            <strong>@novel.Title</strong>
+                        </div>
+                    </td>
                     <td>@novel.Author?.Name</td>
                     <td>@novel.Chapters.Count</td>
-                    <td><span class="novel-status-badge @sc" style="position:static;">@novel.Status</span></td>
+                    <td><span class="novel-status-badge @statusBadge" style="position:static;">@novel.Status</span></td>
                     <td>@novel.ViewCount.ToString("N0")</td>
                     <td>@novel.UpdatedAt.ToString("MMM dd, yyyy")</td>
                     <td>
@@ -49,7 +69,7 @@
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form asp-action="Delete" asp-route-id="@novel.Id" method="post"
-                                  onsubmit="return confirm('Delete novel \'@novelTitleEscaped\'?')">
+                                  onsubmit="return confirm('Delete this novel?')">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="tsuki-btn-ghost btn-sm" style="color:#f06878;border-color:#f06878;">
                                     <i class="bi bi-trash"></i>

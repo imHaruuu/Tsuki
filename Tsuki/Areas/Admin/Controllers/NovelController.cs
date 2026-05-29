@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tsuki.Data;
 using Tsuki.Models;
+using Tsuki.Services;
 using Tsuki.ViewModels.Admin;
 
 namespace Tsuki.Areas.Admin.Controllers
@@ -12,10 +13,12 @@ namespace Tsuki.Areas.Admin.Controllers
     public class NovelController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IImageService _imageService;
 
-        public NovelController(ApplicationDbContext db)
+        public NovelController(ApplicationDbContext db, IImageService imageService)
         {
             _db = db;
+            _imageService = imageService;
         }
 
         // GET: /Admin/Novel
@@ -52,11 +55,27 @@ namespace Tsuki.Areas.Admin.Controllers
                 return View(vm);
             }
 
+            string? coverUrl = vm.CoverUrl;
+            if (vm.CoverImage != null)
+            {
+                try
+                {
+                    coverUrl = await _imageService.SaveImageAsync(vm.CoverImage, "covers");
+                }
+                catch (ArgumentException ex)
+                {
+                    ModelState.AddModelError("CoverImage", ex.Message);
+                    vm.AvailableAuthors = await _db.Authors.OrderBy(a => a.Name).ToListAsync();
+                    vm.AvailableCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync();
+                    return View(vm);
+                }
+            }
+
             var novel = new Novel
             {
                 Title = vm.Title,
                 Description = vm.Description,
-                CoverUrl = vm.CoverUrl,
+                CoverUrl = coverUrl,
                 Status = vm.Status,
                 AuthorId = vm.AuthorId,
                 CreatedAt = DateTime.UtcNow,
@@ -115,9 +134,35 @@ namespace Tsuki.Areas.Admin.Controllers
                 .FirstOrDefaultAsync(n => n.Id == id);
             if (novel == null) return NotFound();
 
+            string? coverUrl = vm.CoverUrl;
+            if (vm.CoverImage != null)
+            {
+                try
+                {
+                    var newCoverUrl = await _imageService.SaveImageAsync(vm.CoverImage, "covers");
+                    if (!string.IsNullOrEmpty(newCoverUrl))
+                    {
+                        // Clean up old local image
+                        if (!string.IsNullOrEmpty(novel.CoverUrl))
+                        {
+                            _imageService.DeleteImage(novel.CoverUrl);
+                        }
+                        coverUrl = newCoverUrl;
+                    }
+                }
+                catch (ArgumentException ex)
+                {
+                    ModelState.AddModelError("CoverImage", ex.Message);
+                    vm.AvailableAuthors = await _db.Authors.OrderBy(a => a.Name).ToListAsync();
+                    vm.AvailableCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync();
+                    ViewBag.NovelId = id;
+                    return View(vm);
+                }
+            }
+
             novel.Title = vm.Title;
             novel.Description = vm.Description;
-            novel.CoverUrl = vm.CoverUrl;
+            novel.CoverUrl = coverUrl;
             novel.Status = vm.Status;
             novel.AuthorId = vm.AuthorId;
             novel.UpdatedAt = DateTime.UtcNow;
@@ -139,6 +184,11 @@ namespace Tsuki.Areas.Admin.Controllers
         {
             var novel = await _db.Novels.FindAsync(id);
             if (novel == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(novel.CoverUrl))
+            {
+                _imageService.DeleteImage(novel.CoverUrl);
+            }
 
             _db.Novels.Remove(novel);
             await _db.SaveChangesAsync();

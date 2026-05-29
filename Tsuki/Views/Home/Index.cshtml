@@ -1,7 +1,7 @@
 @{
     ViewData["Title"] = "Home";
-    var featured = ViewBag.FeaturedNovels as List<Tsuki.ViewModels.NovelCardViewModel> ?? new();
-    var recent   = ViewBag.RecentNovels   as List<Tsuki.ViewModels.NovelCardViewModel> ?? new();
+    var featured = ViewBag.FeaturedNovels as List<NovelCardViewModel> ?? new List<NovelCardViewModel>();
+    var recent   = ViewBag.RecentNovels   as List<NovelCardViewModel> ?? new List<NovelCardViewModel>();
 }
 
 <!-- ── Hero Section ────────────────────────────────────────────── -->
@@ -9,7 +9,7 @@
     <div class="container position-relative" style="z-index:1">
         <div class="row align-items-center">
             <div class="col-lg-7">
-                <h1 class="hero-title">Endless Stories,<br/>One Click Away</h1>
+                <h1 class="hero-title">Endless Stories,<br />One Click Away</h1>
                 <p class="hero-subtitle">
                     Dive into thousands of light novels, web novels, and fantasy epics.
                     Read anywhere, bookmark your favorites, and never lose your place.
@@ -38,7 +38,6 @@
                 </div>
             </div>
             <div class="col-lg-5 d-none d-lg-flex justify-content-end">
-                <!-- Decorative floating cards -->
                 <div class="position-relative" style="width:240px;height:300px;">
                     <div class="novel-card" style="position:absolute;top:0;right:0;width:160px;rotate:-6deg;opacity:0.7;">
                         <div class="novel-cover-wrap"><div class="novel-cover-placeholder">&#128218;</div></div>
@@ -49,6 +48,32 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- ── Quick Search Bar (HTMX) ───────────────────────────────── -->
+<section class="py-3" style="background:var(--bg-surface);border-bottom:1px solid var(--border-color);">
+    <div class="container">
+        <div class="search-bar-wrap">
+            <div class="flex-grow-1 position-relative">
+                <input type="text"
+                       id="home-search-input"
+                       class="search-input-lg"
+                       placeholder="Quick search novels..."
+                       hx-get="/Novel/Search"
+                       hx-trigger="keyup changed delay:400ms, search"
+                       hx-target="#home-search-results"
+                       hx-push-url="false"
+                       name="q"
+                       autocomplete="off"
+                       aria-label="Quick search novels" />
+                <span class="htmx-indicator position-absolute" style="right:0.75rem;top:50%;transform:translateY(-50%);">
+                    <div class="spinner"></div>
+                </span>
+            </div>
+        </div>
+        <!-- HTMX result drop-in; hidden until user types -->
+        <div id="home-search-results" class="mt-2"></div>
     </div>
 </section>
 
@@ -63,7 +88,7 @@
                 @foreach (var novel in featured)
                 {
                     <div class="col">
-                        @await Html.PartialAsync("~/Views/Shared/_NovelCard.cshtml", novel)
+                        <partial name="~/Views/Shared/_NovelCard.cshtml" model="novel" />
                     </div>
                 }
             </div>
@@ -82,7 +107,7 @@
                 @foreach (var novel in recent)
                 {
                     <div class="col">
-                        @await Html.PartialAsync("~/Views/Shared/_NovelCard.cshtml", novel)
+                        <partial name="~/Views/Shared/_NovelCard.cshtml" model="novel" />
                     </div>
                 }
             </div>

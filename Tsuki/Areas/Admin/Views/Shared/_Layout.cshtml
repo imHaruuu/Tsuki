@@ -1,19 +1,25 @@
+@{
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string dashboardClass = controllerName == "Dashboard" ? "admin-nav-link active" : "admin-nav-link";
+    string novelClass     = controllerName == "Novel"     ? "admin-nav-link active" : "admin-nav-link";
+    string chapterClass   = controllerName == "Chapter"   ? "admin-nav-link active" : "admin-nav-link";
+    string authorClass    = controllerName == "Author"    ? "admin-nav-link active" : "admin-nav-link";
+    string categoryClass  = controllerName == "Category"  ? "admin-nav-link active" : "admin-nav-link";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — Tsuki Admin</title>
+    <title>@ViewData["Title"] &mdash; Tsuki Admin</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-@{
-    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-}
     <!-- Top bar -->
     <nav class="tsuki-navbar navbar navbar-expand-lg">
         <div class="container-fluid">
@@ -37,27 +43,22 @@
     <div class="d-flex" style="min-height:calc(100vh - 60px)">
         <!-- Sidebar -->
         <div class="admin-sidebar" style="width:220px;flex-shrink:0;">
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
-               class="admin-nav-link @(ctrl == "Dashboard" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="@dashboardClass">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
-            <a asp-area="Admin" asp-controller="Novel" asp-action="Index"
-               class="admin-nav-link @(ctrl == "Novel" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="Novel" asp-action="Index" class="@novelClass">
                 <i class="bi bi-book"></i> Novels
             </a>
-            <a asp-area="Admin" asp-controller="Chapter" asp-action="Index"
-               class="admin-nav-link @(ctrl == "Chapter" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="Chapter" asp-action="Index" class="@chapterClass">
                 <i class="bi bi-journals"></i> Chapters
             </a>
-            <a asp-area="Admin" asp-controller="Author" asp-action="Index"
-               class="admin-nav-link @(ctrl == "Author" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="Author" asp-action="Index" class="@authorClass">
                 <i class="bi bi-person-badge"></i> Authors
             </a>
-            <a asp-area="Admin" asp-controller="Category" asp-action="Index"
-               class="admin-nav-link @(ctrl == "Category" ? "active" : "")">
+            <a asp-area="Admin" asp-controller="Category" asp-action="Index" class="@categoryClass">
                 <i class="bi bi-tags"></i> Categories
             </a>
-            <hr style="border-color:var(--border-color);margin:0.75rem 1rem;">
+            <hr style="border-color:var(--border-color);margin:0.75rem 1rem;" />
             <a asp-area="" asp-controller="Home" asp-action="Index" class="admin-nav-link">
                 <i class="bi bi-house-door"></i> Back to Site
             </a>

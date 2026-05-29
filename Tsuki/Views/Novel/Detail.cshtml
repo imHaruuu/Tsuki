@@ -1,14 +1,22 @@
-@model Tsuki.ViewModels.NovelDetailViewModel
+@model NovelDetailViewModel
 @{
     ViewData["Title"] = Model.Title;
 
-    string statusClass = Model.Status switch {
-        Tsuki.Models.NovelStatus.Ongoing   => "status-ongoing",
-        Tsuki.Models.NovelStatus.Completed => "status-completed",
-        Tsuki.Models.NovelStatus.Hiatus    => "status-hiatus",
-        _                                  => "status-ongoing"
-    };
+    string statusClass;
+    switch (Model.Status)
+    {
+        case NovelStatus.Completed:
+            statusClass = "status-completed";
+            break;
+        case NovelStatus.Hiatus:
+            statusClass = "status-hiatus";
+            break;
+        default:
+            statusClass = "status-ongoing";
+            break;
+    }
     string statusText = Model.Status.ToString();
+    int chapterCount  = Model.Chapters.Count;
 }
 
 <!-- ── Novel Header ───────────────────────────────────────────── -->
@@ -60,7 +68,7 @@
                 <!-- Stats row -->
                 <div class="d-flex gap-4 mb-3" style="color:var(--text-muted);font-size:0.875rem;">
                     <span class="novel-status-badge @statusClass" style="position:static;">@statusText</span>
-                    <span><i class="bi bi-journals me-1"></i>@Model.Chapters.Count Chapters</span>
+                    <span><i class="bi bi-journals me-1"></i>@chapterCount Chapters</span>
                     <span><i class="bi bi-eye me-1"></i>@Model.ViewCount.ToString("N0") Views</span>
                     <span><i class="bi bi-calendar3 me-1"></i>Updated @Model.UpdatedAt.ToString("MMM dd, yyyy")</span>
                 </div>
@@ -69,8 +77,9 @@
                 <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
                     @if (Model.Chapters.Any())
                     {
+                        int firstChapterId = Model.Chapters.First().Id;
                         <a asp-controller="Chapter" asp-action="Read"
-                           asp-route-id="@Model.Chapters.First().Id"
+                           asp-route-id="@firstChapterId"
                            class="tsuki-btn-primary" id="btn-start-reading">
                             <i class="bi bi-play-fill"></i> Start Reading
                         </a>
@@ -80,7 +89,7 @@
                     {
                         ViewBag.NovelId = Model.Id;
                         ViewBag.IsFavorited = Model.IsFavorited;
-                        @await Html.PartialAsync("~/Views/Shared/_FavoriteButton.cshtml")
+                        <partial name="~/Views/Shared/_FavoriteButton.cshtml" />
                     }
                     else
                     {
@@ -108,7 +117,7 @@
     {
         <div class="chapter-list">
             <div class="chapter-list-header">
-                @Model.Chapters.Count total chapters
+                @chapterCount total chapters
             </div>
             @foreach (var ch in Model.Chapters)
             {
@@ -135,11 +144,7 @@
 
 @section Scripts {
     <script>
-        // Pass antiforgery token to all HTMX requests
-        document.addEventListener('htmx:configRequest', function (evt) {
-            var token = document.querySelector('input[name="__RequestVerificationToken"]');
-            if (token) evt.detail.headers['RequestVerificationToken'] = token.value;
-        });
+        // Antiforgery token is automatically injected by _Layout.cshtml global config
+        // No extra setup needed here
     </script>
-    @Html.AntiForgeryToken()
 }

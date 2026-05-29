@@ -18,6 +18,7 @@ namespace Tsuki.Controllers
         }
 
         // GET: /Chapter/Read/5
+        // Supports both full page load and HTMX partial swap
         public async Task<IActionResult> Read(int id)
         {
             var chapter = await _db.Chapters
@@ -59,6 +60,15 @@ namespace Tsuki.Controllers
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                 if (userId != null)
                     await _historyService.RecordHistoryAsync(userId, chapter.NovelId, chapter.Id);
+            }
+
+            // If HTMX request, return partial view (just reader-wrap div)
+            bool isHtmx = Request.Headers.ContainsKey("HX-Request");
+            if (isHtmx)
+            {
+                // Update browser title via HX-Trigger response header
+                Response.Headers.Append("HX-Push-Url", Url.Action("Read", "Chapter", new { id }) ?? $"/Chapter/Read/{id}");
+                return PartialView("_ReadPartial", vm);
             }
 
             return View(vm);
