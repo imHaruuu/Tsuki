@@ -1,73 +1,106 @@
 @model Tsuki.ViewModels.RegisterViewModel
+@inject UserManager<ApplicationUser> UserManager
 @{
     ViewData["Title"] = "Register";
+    ApplicationUser? currentUser = await UserManager.GetUserAsync(User);
+    string? displayName = currentUser?.DisplayName ?? User.Identity?.Name;
 }
 
 <div class="d-flex justify-content-center align-items-center py-5 px-3">
     <div class="auth-card">
         <div class="mb-4 text-center">
-            <span style="font-size:2.5rem;filter:drop-shadow(0 0 10px rgba(240,192,64,0.4))">&#9790;</span>
+            <a asp-controller="Home" asp-action="Index" class="d-inline-block">
+                <svg class="auth-logo-svg" viewBox="0 0 122.88 122.89" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="authRegMoonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#38bdf8" />
+                            <stop offset="100%" stop-color="#bae6fd" />
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#authRegMoonGradient)" d="M49.06,1.27c2.17-0.45,4.34-0.77,6.48-0.98c2.2-0.21,4.38-0.31,6.53-0.29c1.21,0.01,2.18,1,2.17,2.21 c-0.01,0.93-0.6,1.72-1.42,2.03c-9.15,3.6-16.47,10.31-20.96,18.62c-4.42,8.17-6.1,17.88-4.09,27.68l0.01,0.07 c2.29,11.06,8.83,20.15,17.58,25.91c8.74,5.76,19.67,8.18,30.73,5.92l0.07-0.01c7.96-1.65,14.89-5.49,20.3-10.78 c5.6-5.47,9.56-12.48,11.33-20.16c0.27-1.18,1.45-1.91,2.62-1.64c0.89,0.21,1.53,0.93,1.67,1.78c2.64,16.2-1.35,32.07-10.06,44.71 c-8.67,12.58-22.03,21.97-38.18,25.29c-16.62,3.42-33.05-0.22-46.18-8.86C14.52,104.1,4.69,90.45,1.27,73.83 C-2.07,57.6,1.32,41.55,9.53,28.58C17.78,15.57,30.88,5.64,46.91,1.75c0.31-0.08,0.67-0.16,1.06-0.25l0.01,0l0,0L49.06,1.27 L49.06,1.27z"/>
+                </svg>
+            </a>
         </div>
-        <h1 class="auth-title">Create Account</h1>
-        <p class="auth-subtitle">Join Tsuki and start reading for free</p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <h1 class="auth-title text-center">Already Registered</h1>
+            <p class="auth-subtitle text-center mb-4">You are currently logged in as <strong style="color:var(--accent-blue)">@displayName</strong></p>
+            
+            <div class="d-flex flex-column gap-2 mb-3">
+                <a asp-controller="Home" asp-action="Index" class="tsuki-btn-primary justify-content-center">
+                    <i class="bi bi-house-door me-1"></i> Back to Homepage
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="w-100">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="tsuki-btn-outline w-100 justify-content-center">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out / Switch Account
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Join Tsuki and start reading for free</p>
 
-        <form asp-action="Register" method="post" id="register-form">
-            @Html.AntiForgeryToken()
+            <form asp-action="Register" method="post" id="register-form">
+                @Html.AntiForgeryToken()
 
-            @if (ViewData.ModelState.ErrorCount > 0)
-            {
-                <div class="tsuki-alert tsuki-alert-error mb-3" role="alert">
-                    <div asp-validation-summary="All" class="mb-0"></div>
+                @if (ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="tsuki-alert tsuki-alert-error mb-3" role="alert">
+                        <div asp-validation-summary="All" class="mb-0"></div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="DisplayName" class="form-label"></label>
+                    <input asp-for="DisplayName" class="form-control"
+                           placeholder="Your display name"
+                           id="reg-name"
+                           autocomplete="name" />
+                    <span asp-validation-for="DisplayName" class="text-danger"></span>
                 </div>
-            }
 
-            <div class="mb-3">
-                <label asp-for="DisplayName" class="form-label"></label>
-                <input asp-for="DisplayName" class="form-control"
-                       placeholder="Your display name"
-                       id="reg-name"
-                       autocomplete="name" />
-                <span asp-validation-for="DisplayName" class="text-danger"></span>
-            </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control"
+                           placeholder="you@example.com"
+                           id="reg-email"
+                           autocomplete="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
 
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control"
-                       placeholder="you@example.com"
-                       id="reg-email"
-                       autocomplete="email" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control"
+                           placeholder="Min 8 chars: uppercase, number, special char"
+                           id="reg-password"
+                           autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
 
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label"></label>
-                <input asp-for="Password" class="form-control"
-                       placeholder="At least 6 characters"
-                       id="reg-password"
-                       autocomplete="new-password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
+                <div class="mb-4">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control"
+                           placeholder="Repeat your password"
+                           id="reg-confirm"
+                           autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
 
-            <div class="mb-4">
-                <label asp-for="ConfirmPassword" class="form-label"></label>
-                <input asp-for="ConfirmPassword" class="form-control"
-                       placeholder="Repeat your password"
-                       id="reg-confirm"
-                       autocomplete="new-password" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-            </div>
+                <button type="submit" class="tsuki-btn-primary w-100 justify-content-center" id="btn-register">
+                    <i class="bi bi-person-plus me-1"></i> Create Account
+                </button>
+            </form>
 
-            <button type="submit" class="tsuki-btn-primary w-100 justify-content-center" id="btn-register">
-                <i class="bi bi-person-plus me-1"></i> Create Account
-            </button>
-        </form>
+            <hr style="border-color:var(--border-color);margin:1.5rem 0;" />
 
-        <hr style="border-color:var(--border-color);margin:1.5rem 0;" />
-
-        <p class="text-center mb-0" style="font-size:0.875rem;color:var(--text-muted);">
-            Already have an account?
-            <a asp-controller="Account" asp-action="Login" style="color:var(--accent-gold);">Sign in</a>
-        </p>
+            <p class="text-center mb-0" style="font-size:0.875rem;color:var(--text-muted);">
+                Already have an account?
+                <a asp-controller="Account" asp-action="Login" style="color:var(--accent-gold);">Sign in</a>
+            </p>
+        }
     </div>
 </div>
 

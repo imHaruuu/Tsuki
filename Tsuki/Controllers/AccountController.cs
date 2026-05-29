@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Tsuki.Models;
 using Tsuki.ViewModels;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Tsuki.Controllers
 {
+    [EnableRateLimiting("auth-limiter")]
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -35,10 +37,16 @@ namespace Tsuki.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var result = await _signInManager.PasswordSignInAsync(
-                model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+                model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
                 return LocalRedirect(returnUrl ?? "/");
+
+            if (result.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty, "Account locked temporarily due to too many failed attempts (Max 5). Please try again in 15 minutes.");
+                return View(model);
+            }
 
             ModelState.AddModelError(string.Empty, "Invalid email or password.");
             return View(model);

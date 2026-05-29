@@ -27,6 +27,10 @@ namespace Tsuki.Controllers
 
             if (chapter == null) return NotFound();
 
+            // Increment parent novel view count when a chapter is read
+            chapter.Novel.ViewCount++;
+            await _db.SaveChangesAsync();
+
             // Get prev and next chapters for navigation
             var siblings = await _db.Chapters
                 .Where(c => c.NovelId == chapter.NovelId)
@@ -38,12 +42,19 @@ namespace Tsuki.Controllers
             var prev = currentIndex > 0 ? siblings[currentIndex - 1] : null;
             var next = currentIndex < siblings.Count - 1 ? siblings[currentIndex + 1] : null;
 
+            var rawContent = chapter.Content ?? string.Empty;
+            bool isHtml = IsHtmlContent(rawContent);
+            string renderedContent = isHtml
+                ? rawContent
+                : PlainTextToHtml(rawContent);
+
             var vm = new ChapterReadViewModel
             {
                 Id = chapter.Id,
                 ChapterNumber = chapter.ChapterNumber,
                 Title = chapter.Title,
-                Content = chapter.Content,
+                Content = renderedContent,
+                IsHtmlContent = isHtml,
                 WordCount = chapter.WordCount,
                 NovelId = chapter.NovelId,
                 NovelTitle = chapter.Novel.Title,
@@ -72,6 +83,52 @@ namespace Tsuki.Controllers
             }
 
             return View(vm);
+        }
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Detects whether the content string contains HTML markup.
+        /// Uses a quick heuristic: presence of common block/inline HTML tags.
+        /// </summary>
+        private static bool IsHtmlContent(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return false;
+            var trimmed = content.TrimStart();
+            // Detect leading block tags or any <p>, <br>, <div>, <h1-6>, <img>, <ul>, <ol>
+            return System.Text.RegularExpressions.Regex.IsMatch(
+                trimmed,
+                @"<(p|br|div|span|h[1-6]|img|ul|ol|li|blockquote|pre|table|strong|em|a)\b",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>
+        /// Converts plain text (with newlines as paragraph separators) into
+        /// well-formed HTML paragraphs. Double newlines become new paragraphs;
+        /// single newlines become &lt;br&gt; within a paragraph.
+        /// </summary>
+        private static string PlainTextToHtml(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+            // Normalise CRLF → LF
+            text = text.Replace("\r\n", "\n").Replace("\r", "\n");
+
+            // Split on blank lines (paragraph breaks)
+            var paragraphs = text.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+            var sb = new System.Text.StringBuilder();
+            foreach (var para in paragraphs)
+            {
+                var trimmed = para.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                // Within each paragraph, single newlines → <br>
+                var encoded = System.Net.WebUtility.HtmlEncode(trimmed)
+                                    .Replace("\n", "<br />");
+                sb.Append("<p>").Append(encoded).AppendLine("</p>");
+            }
+            return sb.ToString();
         }
     }
 }

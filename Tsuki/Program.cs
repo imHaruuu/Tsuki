@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Tsuki.Data;
 using Tsuki.Models;
 using Tsuki.Services;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 // ─── Load .env file ──────────────────────────────────────────────────────────
 // Load từ thư mục project (nơi chứa .env)
@@ -27,14 +29,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ─── Identity ────────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
+    // Strict Password Complexity Policy
+    options.Password.RequiredLength = 8;
     options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true; // Requires at least one special character
+
+    // Lockout Settings (Brute Force Protection)
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Lock for 15 minutes
+    options.Lockout.MaxFailedAccessAttempts = 5; // Lock after 5 failed attempts
+    options.Lockout.AllowedForNewUsers = true;
+
     options.SignIn.RequireConfirmedAccount = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// ─── Argon2id Password Hasher (overrides default PBKDF2) ─────────────────────
+// Must be registered AFTER AddIdentity so it replaces the built-in hasher.
+// Existing PBKDF2 hashes are still verified and silently re-hashed on next login.
+builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, Argon2PasswordHasher>();
 
 // Configure cookie paths for Identity
 builder.Services.ConfigureApplicationCookie(options =>
@@ -42,6 +57,22 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
+// ─── Rate Limiting (DoS and Bot protection) ──────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth-limiter", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 5, // Limit to 5 login/registration requests per minute per IP
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1)
+            }));
 });
 
 // ─── Application Services ────────────────────────────────────────────────────
@@ -71,6 +102,18 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+// Web Security Headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    await next();
+});
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -55,7 +55,7 @@
                            hx-get="@searchUrl"
                            hx-trigger="keyup changed delay:400ms, search"
                            hx-target="#novel-list"
-                           hx-include="[name='q'],[name='category']"
+                           hx-include="this, [name='category']"
                            hx-push-url="false"
                            name="q"
                            autocomplete="off"

@@ -28,6 +28,17 @@ namespace Tsuki.Controllers
             return PartialView("_NovelList", vm);
         }
 
+        // GET: /Novel/NavbarSearch  (HTMX navbar dropdown endpoint)
+        public async Task<IActionResult> NavbarSearch(string? q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return Content(""); // Hide dropdown by returning empty when query is empty
+            }
+            var vm = await _novelService.GetNovelsAsync(q, categoryId: null, page: 1, pageSize: 5);
+            return PartialView("_NavbarSearchDropdown", vm.Novels);
+        }
+
         // GET: /Novel/Detail/5
         public async Task<IActionResult> Detail(int id)
         {

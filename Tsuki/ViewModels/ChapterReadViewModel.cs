@@ -8,6 +8,12 @@ namespace Tsuki.ViewModels
         public string Content { get; set; } = string.Empty;
         public int WordCount { get; set; }
 
+        /// <summary>
+        /// True if Content contains HTML markup; false if it is plain text.
+        /// The controller sets this automatically by detecting HTML tags.
+        /// </summary>
+        public bool IsHtmlContent { get; set; }
+
         // Parent novel info
         public int NovelId { get; set; }
         public string NovelTitle { get; set; } = string.Empty;

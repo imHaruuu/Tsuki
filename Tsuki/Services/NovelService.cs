@@ -63,10 +63,6 @@ namespace Tsuki.Services
 
             if (novel == null) return null;
 
-            // Increment view count
-            novel.ViewCount++;
-            await _db.SaveChangesAsync();
-
             return new NovelDetailViewModel
             {
                 Id = novel.Id,

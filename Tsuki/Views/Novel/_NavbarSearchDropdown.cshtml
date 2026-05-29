@@ -1,0 +1,31 @@
+@model IEnumerable<Tsuki.ViewModels.NovelCardViewModel>
+
+<div class="navbar-search-results-card">
+    @if (Model.Any())
+    {
+        <div class="d-flex flex-column">
+            @foreach (var novel in Model)
+            {
+                <a href="/Novel/Detail/@novel.Id" class="navbar-search-item text-decoration-none">
+                    <img src="@(string.IsNullOrEmpty(novel.CoverUrl) ? "/images/covers/placeholder.png" : novel.CoverUrl)" alt="@novel.Title" class="navbar-search-cover" />
+                    <div class="navbar-search-info flex-grow-1">
+                        <div class="navbar-search-title">@novel.Title</div>
+                        <div class="navbar-search-author">@novel.AuthorName</div>
+                    </div>
+                </a>
+            }
+            <div class="navbar-search-footer">
+                <button type="submit" class="btn-view-all-results">
+                    See all results
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="navbar-search-empty">
+            <i class="bi bi-search" style="font-size: 1.2rem; color: var(--text-muted);"></i>
+            <span class="ms-2">No novels found</span>
+        </div>
+    }
+</div>

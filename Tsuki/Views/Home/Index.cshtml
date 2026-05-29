@@ -18,9 +18,12 @@
                     <a asp-controller="Novel" asp-action="Index" class="tsuki-btn-primary" id="btn-browse-novels">
                         <i class="bi bi-book-half"></i> Browse Novels
                     </a>
-                    <a asp-controller="Account" asp-action="Register" class="tsuki-btn-outline" id="btn-get-started">
-                        Get Started Free
-                    </a>
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <a asp-controller="Account" asp-action="Register" class="tsuki-btn-outline" id="btn-get-started">
+                            Get Started Free
+                        </a>
+                    }
                 </div>
                 <div class="hero-stats">
                     <div class="stat-item">
@@ -39,11 +42,15 @@
             </div>
             <div class="col-lg-5 d-none d-lg-flex justify-content-end">
                 <div class="position-relative" style="width:240px;height:300px;">
-                    <div class="novel-card" style="position:absolute;top:0;right:0;width:160px;rotate:-6deg;opacity:0.7;">
-                        <div class="novel-cover-wrap"><div class="novel-cover-placeholder">&#128218;</div></div>
+                    <div class="novel-card" style="position:absolute;top:0;right:0;width:160px;rotate:-6deg;opacity:0.85;">
+                        <div class="novel-cover-wrap">
+                            <img src="/images/2.6 Teaser 2.jpg" alt="Featured Novel" class="novel-cover" loading="lazy" />
+                        </div>
                     </div>
-                    <div class="novel-card" style="position:absolute;bottom:0;left:0;width:160px;rotate:4deg;opacity:0.6;">
-                        <div class="novel-cover-wrap"><div class="novel-cover-placeholder">&#9997;&#65039;</div></div>
+                    <div class="novel-card" style="position:absolute;bottom:0;left:0;width:160px;rotate:4deg;opacity:0.75;">
+                        <div class="novel-cover-wrap">
+                            <img src="/images/Iuno Sky 2.jpg" alt="Featured Novel" class="novel-cover" loading="lazy" />
+                        </div>
                     </div>
                 </div>
             </div>
