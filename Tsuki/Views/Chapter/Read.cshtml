@@ -1,0 +1,95 @@
+@model Tsuki.ViewModels.ChapterReadViewModel
+@{
+    ViewData["Title"] = $"Ch.{Model.ChapterNumber} — {Model.NovelTitle}";
+}
+
+<div class="reader-wrap">
+    <!-- Breadcrumb -->
+    <nav class="reader-breadcrumb" aria-label="breadcrumb">
+        <a asp-controller="Home" asp-action="Index">Home</a>
+        <span class="mx-2">›</span>
+        <a asp-controller="Novel" asp-action="Index">Novels</a>
+        <span class="mx-2">›</span>
+        <a asp-controller="Novel" asp-action="Detail" asp-route-id="@Model.NovelId">@Model.NovelTitle</a>
+        <span class="mx-2">›</span>
+        <span style="color:var(--text-primary)">Chapter @Model.ChapterNumber</span>
+    </nav>
+
+    <!-- Chapter navigation (top) -->
+    <div class="reader-nav mb-4">
+        @if (Model.PrevChapterId.HasValue)
+        {
+            <a asp-controller="Chapter" asp-action="Read" asp-route-id="@Model.PrevChapterId"
+               class="reader-nav-btn prev" id="btn-prev-chapter">
+                <i class="bi bi-chevron-left"></i> Ch.@Model.PrevChapterNumber
+            </a>
+        }
+        else
+        {
+            <span></span>
+        }
+
+        <a asp-controller="Novel" asp-action="Detail" asp-route-id="@Model.NovelId"
+           class="tsuki-btn-ghost" id="btn-back-to-novel">
+            <i class="bi bi-list-ul me-1"></i>Chapter List
+        </a>
+
+        @if (Model.NextChapterId.HasValue)
+        {
+            <a asp-controller="Chapter" asp-action="Read" asp-route-id="@Model.NextChapterId"
+               class="reader-nav-btn next" id="btn-next-chapter">
+                Ch.@Model.NextChapterNumber <i class="bi bi-chevron-right"></i>
+            </a>
+        }
+        else
+        {
+            <span></span>
+        }
+    </div>
+
+    <!-- Chapter title -->
+    <h1 class="reader-chapter-title">@Model.Title</h1>
+    <p class="reader-meta">
+        <i class="bi bi-book me-1"></i> @Model.NovelTitle
+        &nbsp;·&nbsp;
+        <i class="bi bi-text-paragraph me-1"></i> @Model.WordCount.ToString("N0") words
+    </p>
+
+    <!-- Chapter content -->
+    <article class="reader-content" id="chapter-content">
+        @Html.Raw(Model.Content)
+    </article>
+
+    <!-- Chapter navigation (bottom) -->
+    <div class="reader-nav mt-5">
+        @if (Model.PrevChapterId.HasValue)
+        {
+            <a asp-controller="Chapter" asp-action="Read" asp-route-id="@Model.PrevChapterId"
+               class="reader-nav-btn prev">
+                <i class="bi bi-chevron-left"></i> Chapter @Model.PrevChapterNumber
+            </a>
+        }
+        else
+        {
+            <span></span>
+        }
+
+        @if (Model.NextChapterId.HasValue)
+        {
+            <a asp-controller="Chapter" asp-action="Read" asp-route-id="@Model.NextChapterId"
+               class="reader-nav-btn next">
+                Chapter @Model.NextChapterNumber <i class="bi bi-chevron-right"></i>
+            </a>
+        }
+        else
+        {
+            <div class="text-center" style="color:var(--text-muted);font-size:0.875rem;">
+                <i class="bi bi-check-circle me-1 text-gold"></i>
+                You've reached the last available chapter!
+                <a asp-controller="Novel" asp-action="Detail" asp-route-id="@Model.NovelId" class="d-block mt-2 tsuki-btn-outline">
+                    Back to Novel
+                </a>
+            </div>
+        }
+    </div>
+</div>

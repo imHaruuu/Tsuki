@@ -1,0 +1,76 @@
+@model Tsuki.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="d-flex justify-content-center align-items-center py-5 px-3">
+    <div class="auth-card">
+        <div class="mb-4 text-center">
+            <span style="font-size:2.5rem;filter:drop-shadow(0 0 10px rgba(240,192,64,0.4))">&#9790;</span>
+        </div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">Join Tsuki and start reading for free</p>
+
+        <form asp-action="Register" method="post" id="register-form">
+            @Html.AntiForgeryToken()
+
+            @if (ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="tsuki-alert tsuki-alert-error mb-3" role="alert">
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <input asp-for="DisplayName" class="form-control"
+                       placeholder="Your display name"
+                       id="reg-name"
+                       autocomplete="name" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control"
+                       placeholder="you@example.com"
+                       id="reg-email"
+                       autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control"
+                       placeholder="At least 6 characters"
+                       id="reg-password"
+                       autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control"
+                       placeholder="Repeat your password"
+                       id="reg-confirm"
+                       autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="tsuki-btn-primary w-100 justify-content-center" id="btn-register">
+                <i class="bi bi-person-plus me-1"></i> Create Account
+            </button>
+        </form>
+
+        <hr style="border-color:var(--border-color);margin:1.5rem 0;" />
+
+        <p class="text-center mb-0" style="font-size:0.875rem;color:var(--text-muted);">
+            Already have an account?
+            <a asp-controller="Account" asp-action="Login" style="color:var(--accent-gold);">Sign in</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

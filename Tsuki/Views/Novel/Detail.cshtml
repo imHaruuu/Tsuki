@@ -1,0 +1,145 @@
+@model Tsuki.ViewModels.NovelDetailViewModel
+@{
+    ViewData["Title"] = Model.Title;
+
+    string statusClass = Model.Status switch {
+        Tsuki.Models.NovelStatus.Ongoing   => "status-ongoing",
+        Tsuki.Models.NovelStatus.Completed => "status-completed",
+        Tsuki.Models.NovelStatus.Hiatus    => "status-hiatus",
+        _                                  => "status-ongoing"
+    };
+    string statusText = Model.Status.ToString();
+}
+
+<!-- ── Novel Header ───────────────────────────────────────────── -->
+<div class="novel-detail-hero">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Cover -->
+            <div class="col-auto">
+                <div class="novel-detail-cover">
+                    @if (!string.IsNullOrEmpty(Model.CoverUrl))
+                    {
+                        <img src="@Model.CoverUrl" alt="@Model.Title cover" />
+                    }
+                    else
+                    {
+                        <div class="novel-cover-placeholder" style="aspect-ratio:2/3;height:280px;">&#128218;</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="col">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-2">
+                    <ol class="breadcrumb" style="font-size:0.8rem;color:var(--text-muted);">
+                        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" style="color:var(--text-muted)">Home</a></li>
+                        <li class="breadcrumb-item"><a asp-controller="Novel" asp-action="Index" style="color:var(--text-muted)">Novels</a></li>
+                        <li class="breadcrumb-item active" style="color:var(--text-secondary)">@Model.Title</li>
+                    </ol>
+                </nav>
+
+                <h1 class="novel-detail-title">@Model.Title</h1>
+                <p class="novel-detail-author">
+                    <i class="bi bi-person me-1"></i>
+                    <span>@Model.AuthorName</span>
+                </p>
+
+                <!-- Category pills -->
+                @if (Model.CategoryNames.Any())
+                {
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @foreach (var cat in Model.CategoryNames)
+                        {
+                            <span class="category-pill">@cat</span>
+                        }
+                    </div>
+                }
+
+                <!-- Stats row -->
+                <div class="d-flex gap-4 mb-3" style="color:var(--text-muted);font-size:0.875rem;">
+                    <span class="novel-status-badge @statusClass" style="position:static;">@statusText</span>
+                    <span><i class="bi bi-journals me-1"></i>@Model.Chapters.Count Chapters</span>
+                    <span><i class="bi bi-eye me-1"></i>@Model.ViewCount.ToString("N0") Views</span>
+                    <span><i class="bi bi-calendar3 me-1"></i>Updated @Model.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
+                    @if (Model.Chapters.Any())
+                    {
+                        <a asp-controller="Chapter" asp-action="Read"
+                           asp-route-id="@Model.Chapters.First().Id"
+                           class="tsuki-btn-primary" id="btn-start-reading">
+                            <i class="bi bi-play-fill"></i> Start Reading
+                        </a>
+                    }
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        ViewBag.NovelId = Model.Id;
+                        ViewBag.IsFavorited = Model.IsFavorited;
+                        @await Html.PartialAsync("~/Views/Shared/_FavoriteButton.cshtml")
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn-favorite" id="btn-login-to-fav">
+                            <i class="bi bi-heart"></i> Login to Favorite
+                        </a>
+                    }
+                </div>
+
+                <!-- Description -->
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <p class="novel-description">@Model.Description</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Chapter List ───────────────────────────────────────────── -->
+<div class="container py-4">
+    <h2 class="section-title mb-3"><i class="bi bi-list-ol me-1 text-gold"></i> Chapters</h2>
+
+    @if (Model.Chapters.Any())
+    {
+        <div class="chapter-list">
+            <div class="chapter-list-header">
+                @Model.Chapters.Count total chapters
+            </div>
+            @foreach (var ch in Model.Chapters)
+            {
+                <a asp-controller="Chapter" asp-action="Read" asp-route-id="@ch.Id"
+                   class="chapter-item">
+                    <span class="chapter-item-num">Ch. @ch.ChapterNumber</span>
+                    <span class="chapter-item-title">@ch.Title</span>
+                    <span class="chapter-item-meta">
+                        @ch.WordCount.ToString("N0") words<br />
+                        <small>@ch.CreatedAt.ToString("MMM dd")</small>
+                    </span>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4" style="color:var(--text-muted)">
+            <i class="bi bi-journal-x" style="font-size:2.5rem;opacity:0.4;"></i>
+            <p class="mt-2">No chapters available yet. Check back soon!</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Pass antiforgery token to all HTMX requests
+        document.addEventListener('htmx:configRequest', function (evt) {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) evt.detail.headers['RequestVerificationToken'] = token.value;
+        });
+    </script>
+    @Html.AntiForgeryToken()
+}

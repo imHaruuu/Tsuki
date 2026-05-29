@@ -1,0 +1,89 @@
+@model Tsuki.ViewModels.NovelListViewModel
+@{
+    ViewData["Title"] = "Novels";
+
+    string allPillClass = Model.ActiveCategoryId == null ? "filter-pill active" : "filter-pill";
+    string searchUrl    = Url.Action("Search", "Novel") ?? "/Novel/Search";
+    string allSearchUrl = Url.Action("Search", "Novel", new { q = Model.SearchQuery }) ?? "/Novel/Search";
+    string allIndexUrl  = Url.Action("Index",  "Novel", new { q = Model.SearchQuery }) ?? "/Novel";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <!-- ── Sidebar ─────────────────────── -->
+        <div class="col-lg-3 mb-4">
+            <div class="sticky-top" style="top:80px">
+                <h6 class="mb-3 text-uppercase" style="color:var(--text-muted);font-size:0.75rem;letter-spacing:0.08em;font-weight:600;">
+                    Categories
+                </h6>
+                <div class="d-flex flex-column gap-1">
+                    <a class="@allPillClass"
+                       hx-get="@allSearchUrl"
+                       hx-target="#novel-list"
+                       hx-push-url="false"
+                       href="@allIndexUrl"
+                       id="filter-all">
+                        <i class="bi bi-grid me-1"></i> All Novels
+                    </a>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        string catClass    = Model.ActiveCategoryId == cat.Id ? "filter-pill active" : "filter-pill";
+                        string catSearchUrl = Url.Action("Search", "Novel", new { q = Model.SearchQuery, category = cat.Id }) ?? "#";
+                        string catIndexUrl  = Url.Action("Index",  "Novel", new { q = Model.SearchQuery, category = cat.Id }) ?? "#";
+                        <a class="@catClass"
+                           hx-get="@catSearchUrl"
+                           hx-target="#novel-list"
+                           hx-push-url="false"
+                           href="@catIndexUrl"
+                           id="filter-cat-@cat.Id">
+                            @cat.Name
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Main ────────────────────────── -->
+        <div class="col-lg-9">
+            <div class="search-bar-wrap mb-3">
+                <div class="flex-grow-1 position-relative">
+                    <input type="text"
+                           id="novel-search-input"
+                           class="search-input-lg"
+                           placeholder="Search by title..."
+                           value="@Model.SearchQuery"
+                           hx-get="@searchUrl"
+                           hx-trigger="keyup changed delay:400ms, search"
+                           hx-target="#novel-list"
+                           hx-include="[name='q'],[name='category']"
+                           hx-push-url="false"
+                           name="q"
+                           autocomplete="off"
+                           aria-label="Search novels" />
+                    <span class="htmx-indicator position-absolute" style="right:0.75rem;top:50%;transform:translateY(-50%);">
+                        <div class="spinner"></div>
+                    </span>
+                </div>
+                <input type="hidden" name="category" value="@Model.ActiveCategoryId" />
+            </div>
+
+            <div class="d-flex align-items-center mb-3">
+                <p class="mb-0" style="color:var(--text-muted);font-size:0.875rem;">
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                    {
+                        <text>Results for &quot;<strong style="color:var(--text-primary)">@Model.SearchQuery</strong>&quot;</text>
+                    }
+                    else
+                    {
+                        <text>Showing all novels</text>
+                    }
+                    &nbsp;&mdash; @(Model.Novels.Count) novels on this page
+                </p>
+            </div>
+
+            <div id="novel-list">
+                @await Html.PartialAsync("_NovelList", Model)
+            </div>
+        </div>
+    </div>
+</div>

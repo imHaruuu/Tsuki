@@ -1,0 +1,23 @@
+@{
+    int novelId = (int)(ViewBag.NovelId ?? 0);
+    bool isFavorited = (bool)(ViewBag.IsFavorited ?? false);
+
+    string favClass      = isFavorited ? "favorited" : "";
+    string iconClass     = isFavorited ? "bi-heart-fill" : "bi-heart";
+    string btnLabel      = isFavorited ? "Favorited" : "Add to Favorites";
+    string ariaLabel     = isFavorited ? "Remove from favorites" : "Add to favorites";
+    string toggleUrl     = Url.Action("Toggle", "Favorite") ?? "/Favorite/Toggle";
+    string hxVals        = $"{{\"novelId\": \"{novelId}\"}}";
+}
+
+<button type="button"
+        id="favorite-btn"
+        class="btn-favorite @favClass"
+        hx-post="@toggleUrl"
+        hx-vals="@hxVals"
+        hx-target="#favorite-btn"
+        hx-swap="outerHTML"
+        aria-label="@ariaLabel">
+    <i class="bi @iconClass"></i>
+    <span>@btnLabel</span>
+</button>

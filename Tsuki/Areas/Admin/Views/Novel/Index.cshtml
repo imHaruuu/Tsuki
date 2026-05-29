@@ -1,0 +1,64 @@
+@model IEnumerable<Tsuki.Models.Novel>
+@{
+    ViewData["Title"] = "Manage Novels";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="section-title mb-1"><i class="bi bi-book text-gold me-2"></i>Novels</h1>
+        <p class="section-subtitle mb-0">Manage all novels in the library</p>
+    </div>
+    <a asp-action="Create" class="tsuki-btn-primary" id="btn-create-novel">
+        <i class="bi bi-plus-lg me-1"></i> Add Novel
+    </a>
+</div>
+
+<div class="admin-table">
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Chapters</th>
+                <th>Status</th>
+                <th>Views</th>
+                <th>Updated</th>
+                <th style="width:130px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var novel in Model)
+            {
+                string sc = novel.Status switch {
+                    Tsuki.Models.NovelStatus.Ongoing   => "status-ongoing",
+                    Tsuki.Models.NovelStatus.Completed => "status-completed",
+                    Tsuki.Models.NovelStatus.Hiatus    => "status-hiatus",
+                    _                                  => ""
+                };
+                string novelTitleEscaped = novel.Title.Replace("'", "\\'");
+                <tr>
+                    <td><strong>@novel.Title</strong></td>
+                    <td>@novel.Author?.Name</td>
+                    <td>@novel.Chapters.Count</td>
+                    <td><span class="novel-status-badge @sc" style="position:static;">@novel.Status</span></td>
+                    <td>@novel.ViewCount.ToString("N0")</td>
+                    <td>@novel.UpdatedAt.ToString("MMM dd, yyyy")</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a asp-action="Edit" asp-route-id="@novel.Id" class="tsuki-btn-ghost btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@novel.Id" method="post"
+                                  onsubmit="return confirm('Delete novel \'@novelTitleEscaped\'?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="tsuki-btn-ghost btn-sm" style="color:#f06878;border-color:#f06878;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

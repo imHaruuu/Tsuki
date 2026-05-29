@@ -1,0 +1,21 @@
+@model Tsuki.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container py-5 text-center">
+    <div style="font-size:3.5rem;opacity:0.4">&#9888;&#65039;</div>
+    <h1 class="mt-3" style="color:var(--text-secondary)">Something went wrong</h1>
+    <p style="color:var(--text-muted)">An error occurred while processing your request.</p>
+
+    @if (Model.ShowRequestId)
+    {
+        <p style="color:var(--text-muted);font-size:0.8rem;">
+            Request ID: <code style="color:var(--accent-gold)">@Model.RequestId</code>
+        </p>
+    }
+
+    <a asp-controller="Home" asp-action="Index" class="tsuki-btn-primary mt-3">
+        <i class="bi bi-house-door me-1"></i> Go Home
+    </a>
+</div>

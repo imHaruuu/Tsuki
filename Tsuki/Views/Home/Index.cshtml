@@ -1,0 +1,107 @@
+@{
+    ViewData["Title"] = "Home";
+    var featured = ViewBag.FeaturedNovels as List<Tsuki.ViewModels.NovelCardViewModel> ?? new();
+    var recent   = ViewBag.RecentNovels   as List<Tsuki.ViewModels.NovelCardViewModel> ?? new();
+}
+
+<!-- ── Hero Section ────────────────────────────────────────────── -->
+<section class="tsuki-hero">
+    <div class="container position-relative" style="z-index:1">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="hero-title">Endless Stories,<br/>One Click Away</h1>
+                <p class="hero-subtitle">
+                    Dive into thousands of light novels, web novels, and fantasy epics.
+                    Read anywhere, bookmark your favorites, and never lose your place.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a asp-controller="Novel" asp-action="Index" class="tsuki-btn-primary" id="btn-browse-novels">
+                        <i class="bi bi-book-half"></i> Browse Novels
+                    </a>
+                    <a asp-controller="Account" asp-action="Register" class="tsuki-btn-outline" id="btn-get-started">
+                        Get Started Free
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">@featured.Count+</span>
+                        <span class="stat-label">Novels</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">Free</span>
+                        <span class="stat-label">Forever</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Access</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-flex justify-content-end">
+                <!-- Decorative floating cards -->
+                <div class="position-relative" style="width:240px;height:300px;">
+                    <div class="novel-card" style="position:absolute;top:0;right:0;width:160px;rotate:-6deg;opacity:0.7;">
+                        <div class="novel-cover-wrap"><div class="novel-cover-placeholder">&#128218;</div></div>
+                    </div>
+                    <div class="novel-card" style="position:absolute;bottom:0;left:0;width:160px;rotate:4deg;opacity:0.6;">
+                        <div class="novel-cover-wrap"><div class="novel-cover-placeholder">&#9997;&#65039;</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Featured Novels ────────────────────────────────────────── -->
+@if (featured.Any())
+{
+    <section class="py-5">
+        <div class="container">
+            <h2 class="section-title"><i class="bi bi-star-fill text-gold me-1"></i> Top Novels</h2>
+            <p class="section-subtitle">Most viewed novels on Tsuki</p>
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+                @foreach (var novel in featured)
+                {
+                    <div class="col">
+                        @await Html.PartialAsync("~/Views/Shared/_NovelCard.cshtml", novel)
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ── Recently Updated ───────────────────────────────────────── -->
+@if (recent.Any())
+{
+    <section class="py-4 pb-5" style="background:var(--bg-surface);border-top:1px solid var(--border-color);">
+        <div class="container">
+            <h2 class="section-title mt-2"><i class="bi bi-clock-history me-1 text-gold"></i> Recently Updated</h2>
+            <p class="section-subtitle">Latest chapter releases</p>
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 g-3">
+                @foreach (var novel in recent)
+                {
+                    <div class="col">
+                        @await Html.PartialAsync("~/Views/Shared/_NovelCard.cshtml", novel)
+                    </div>
+                }
+            </div>
+            <div class="text-center mt-4">
+                <a asp-controller="Novel" asp-action="Index" class="tsuki-btn-outline" id="btn-view-all">
+                    <i class="bi bi-grid-3x3-gap me-1"></i> View All Novels
+                </a>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ── Empty state ───────────────────────────────────────────── -->
+@if (!featured.Any() && !recent.Any())
+{
+    <div class="container py-5 text-center">
+        <div style="font-size:4rem;">&#128218;</div>
+        <h3 class="mt-3" style="color:var(--text-secondary)">No novels yet</h3>
+        <p style="color:var(--text-muted)">The library is empty. Log in as Admin to add novels.</p>
+        <a asp-controller="Novel" asp-action="Index" class="tsuki-btn-primary mt-2">Browse Library</a>
+    </div>
+}

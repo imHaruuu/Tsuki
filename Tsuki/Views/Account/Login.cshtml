@@ -1,0 +1,70 @@
+@model Tsuki.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="d-flex justify-content-center align-items-center py-5 px-3">
+    <div class="auth-card">
+        <div class="mb-4 text-center">
+            <span style="font-size:2.5rem;filter:drop-shadow(0 0 10px rgba(240,192,64,0.4))">&#9790;</span>
+        </div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Sign in to continue your reading journey</p>
+
+        <form asp-action="Login" method="post" id="login-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="RememberMe" value="false" />
+
+            @if (ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="tsuki-alert tsuki-alert-error mb-3" role="alert">
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control"
+                       placeholder="you@example.com"
+                       id="login-email"
+                       autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control"
+                       placeholder="Password"
+                       id="login-password"
+                       autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <div class="form-check">
+                    <input asp-for="RememberMe" class="form-check-input" id="login-remember"
+                           style="background-color:var(--bg-elevated);border-color:var(--border-color);" />
+                    <label asp-for="RememberMe" class="form-check-label"
+                           style="color:var(--text-secondary);font-size:0.875rem;">
+                        Remember me
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="tsuki-btn-primary w-100 justify-content-center" id="btn-login">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+            </button>
+        </form>
+
+        <hr style="border-color:var(--border-color);margin:1.5rem 0;" />
+
+        <p class="text-center mb-0" style="font-size:0.875rem;color:var(--text-muted);">
+            Don't have an account?
+            <a asp-controller="Account" asp-action="Register" style="color:var(--accent-gold);">Create one free</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,67 @@
+@model IEnumerable<Tsuki.Models.Chapter>
+@{
+    ViewData["Title"] = "Manage Chapters";
+    var novels = ViewBag.Novels as List<Tsuki.Models.Novel> ?? new();
+    int? selectedNovelId = ViewBag.SelectedNovelId;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="section-title mb-1"><i class="bi bi-journals text-gold me-2"></i>Chapters</h1>
+        <p class="section-subtitle mb-0">Manage chapters per novel</p>
+    </div>
+    <a asp-action="Create" class="tsuki-btn-primary" id="btn-create-chapter">
+        <i class="bi bi-plus-lg me-1"></i> Add Chapter
+    </a>
+</div>
+
+<!-- Filter by novel -->
+<div class="mb-3">
+    <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center">
+        <select name="novelId" class="form-select" style="max-width:300px;" onchange="this.form.submit()"
+                asp-items="@(new SelectList(novels, "Id", "Title", selectedNovelId))">
+            <option value="">— All Novels —</option>
+        </select>
+    </form>
+</div>
+
+<div class="admin-table">
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th>Novel</th>
+                <th>Ch#</th>
+                <th>Title</th>
+                <th>Words</th>
+                <th>Created</th>
+                <th style="width:110px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ch in Model)
+            {
+                <tr>
+                    <td>@ch.Novel?.Title</td>
+                    <td>@ch.ChapterNumber</td>
+                    <td>@ch.Title</td>
+                    <td>@ch.WordCount.ToString("N0")</td>
+                    <td>@ch.CreatedAt.ToString("MMM dd, yyyy")</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a asp-action="Edit" asp-route-id="@ch.Id" class="tsuki-btn-ghost btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@ch.Id" method="post"
+                                  onsubmit="return confirm('Delete this chapter?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="tsuki-btn-ghost btn-sm" style="color:#f06878;border-color:#f06878;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
