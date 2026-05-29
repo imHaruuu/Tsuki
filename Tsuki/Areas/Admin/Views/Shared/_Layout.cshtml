@@ -2,7 +2,6 @@
     var controllerName = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     string dashboardClass = controllerName == "Dashboard" ? "admin-nav-link active" : "admin-nav-link";
     string novelClass     = controllerName == "Novel"     ? "admin-nav-link active" : "admin-nav-link";
-    string chapterClass   = controllerName == "Chapter"   ? "admin-nav-link active" : "admin-nav-link";
     string authorClass    = controllerName == "Author"    ? "admin-nav-link active" : "admin-nav-link";
     string categoryClass  = controllerName == "Category"  ? "admin-nav-link active" : "admin-nav-link";
 }
@@ -48,9 +47,6 @@
             </a>
             <a asp-area="Admin" asp-controller="Novel" asp-action="Index" class="@novelClass">
                 <i class="bi bi-book"></i> Novels
-            </a>
-            <a asp-area="Admin" asp-controller="Chapter" asp-action="Index" class="@chapterClass">
-                <i class="bi bi-journals"></i> Chapters
             </a>
             <a asp-area="Admin" asp-controller="Author" asp-action="Index" class="@authorClass">
                 <i class="bi bi-person-badge"></i> Authors

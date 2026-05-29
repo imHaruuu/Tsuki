@@ -98,6 +98,7 @@ namespace Tsuki.Areas.Admin.Controllers
         {
             var novel = await _db.Novels
                 .Include(n => n.NovelCategories)
+                .Include(n => n.Chapters)
                 .FirstOrDefaultAsync(n => n.Id == id);
             if (novel == null) return NotFound();
 
@@ -110,7 +111,8 @@ namespace Tsuki.Areas.Admin.Controllers
                 AuthorId = novel.AuthorId,
                 SelectedCategoryIds = novel.NovelCategories.Select(nc => nc.CategoryId).ToList(),
                 AvailableAuthors = await _db.Authors.OrderBy(a => a.Name).ToListAsync(),
-                AvailableCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync()
+                AvailableCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync(),
+                Chapters = novel.Chapters.OrderBy(c => c.ChapterNumber).ToList()
             };
             ViewBag.NovelId = id;
             return View(vm);

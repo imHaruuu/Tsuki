@@ -18,26 +18,15 @@ namespace Tsuki.Areas.Admin.Controllers
             _db = db;
         }
 
-        // GET: /Admin/Chapter?novelId=5
-        public async Task<IActionResult> Index(int? novelId)
-        {
-            var query = _db.Chapters.Include(c => c.Novel).AsQueryable();
-            if (novelId.HasValue)
-                query = query.Where(c => c.NovelId == novelId.Value);
-
-            var chapters = await query.OrderBy(c => c.NovelId).ThenBy(c => c.ChapterNumber).ToListAsync();
-            ViewBag.Novels = await _db.Novels.OrderBy(n => n.Title).ToListAsync();
-            ViewBag.SelectedNovelId = novelId;
-            return View(chapters);
-        }
-
         // GET: /Admin/Chapter/Create
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? novelId)
         {
             var vm = new CreateChapterViewModel
             {
+                NovelId = novelId ?? 0,
                 AvailableNovels = await _db.Novels.OrderBy(n => n.Title).ToListAsync()
             };
+            ViewBag.ReturnNovelId = novelId;
             return View(vm);
         }
 
@@ -69,7 +58,7 @@ namespace Tsuki.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = $"Chapter {chapter.ChapterNumber} created successfully.";
-            return RedirectToAction(nameof(Index), new { novelId = vm.NovelId });
+            return RedirectToAction("Edit", "Novel", new { area = "Admin", id = vm.NovelId });
         }
 
         // GET: /Admin/Chapter/Edit/5
@@ -87,6 +76,7 @@ namespace Tsuki.Areas.Admin.Controllers
                 AvailableNovels = await _db.Novels.OrderBy(n => n.Title).ToListAsync()
             };
             ViewBag.ChapterId = id;
+            ViewBag.ReturnNovelId = chapter.NovelId;
             return View(vm);
         }
 
@@ -112,7 +102,7 @@ namespace Tsuki.Areas.Admin.Controllers
 
             await _db.SaveChangesAsync();
             TempData["Success"] = "Chapter updated successfully.";
-            return RedirectToAction(nameof(Index), new { novelId = chapter.NovelId });
+            return RedirectToAction("Edit", "Novel", new { area = "Admin", id = chapter.NovelId });
         }
 
         // POST: /Admin/Chapter/Delete/5
@@ -126,7 +116,7 @@ namespace Tsuki.Areas.Admin.Controllers
             _db.Chapters.Remove(chapter);
             await _db.SaveChangesAsync();
             TempData["Success"] = "Chapter deleted.";
-            return RedirectToAction(nameof(Index), new { novelId });
+            return RedirectToAction("Edit", "Novel", new { area = "Admin", id = novelId });
         }
     }
 }

@@ -31,6 +31,9 @@ namespace Tsuki.ViewModels.Admin
         [Display(Name = "Categories")]
         public List<int> SelectedCategoryIds { get; set; } = new();
 
+        // Chapters list for editing context
+        public List<Chapter> Chapters { get; set; } = new();
+
         // For dropdowns in the form
         public List<Author> AvailableAuthors { get; set; } = new();
         public List<Category> AvailableCategories { get; set; } = new();

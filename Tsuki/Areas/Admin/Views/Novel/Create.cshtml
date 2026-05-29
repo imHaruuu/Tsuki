@@ -138,6 +138,73 @@
     </form>
 </div>
 
+@if (isEdit)
+{
+    <hr class="border-secondary my-5" />
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+        <div>
+            <h2 class="section-title mb-1" style="font-size:1.5rem;"><i class="bi bi-journals text-gold me-2"></i>Chapters List</h2>
+            <p class="section-subtitle mb-0" style="font-size:0.875rem; color: var(--text-muted);">Manage chapters for this novel</p>
+        </div>
+        <a href="/Admin/Chapter/Create?novelId=@ViewBag.NovelId" class="tsuki-btn-primary btn-sm px-3 py-2" id="btn-add-chapter-to-novel">
+            <i class="bi bi-plus-lg me-1"></i> Add Chapter
+        </a>
+    </div>
+
+    @if (Model.Chapters != null && Model.Chapters.Any())
+    {
+        <div class="admin-table shadow-sm" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden;">
+            <table class="table mb-0 align-middle">
+                <thead>
+                    <tr class="bg-dark text-white">
+                        <th class="py-3 px-4" style="width: 80px;">Ch #</th>
+                        <th class="py-3">Title</th>
+                        <th class="py-3">Word Count</th>
+                        <th class="py-3">Created</th>
+                        <th class="py-3 px-4" style="width: 130px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ch in Model.Chapters)
+                    {
+                        <tr>
+                            <td class="py-3 px-4"><strong>@ch.ChapterNumber</strong></td>
+                            <td class="py-3"><span class="text-white fw-semibold">@ch.Title</span></td>
+                            <td class="py-3" style="color: var(--text-secondary);"><i class="bi bi-file-earmark-text text-muted me-1"></i>@ch.WordCount.ToString("N0") words</td>
+                            <td class="py-3" style="color: var(--text-secondary);"><i class="bi bi-calendar3 text-muted me-1"></i>@ch.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="py-3 px-4">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="/Admin/Chapter/Edit/@ch.Id" class="tsuki-btn-ghost btn-sm" title="Edit Chapter">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-controller="Chapter" asp-route-id="@ch.Id" method="post" onsubmit="return confirm('Delete chapter @ch.ChapterNumber: @ch.Title?')" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="tsuki-btn-ghost btn-sm" style="color:#f06878;border-color:#f06878;" title="Delete Chapter">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 shadow-sm" style="background:var(--bg-elevated); border:1px dashed var(--border-color); border-radius:var(--radius-sm); color:var(--text-muted)">
+            <i class="bi bi-journal-x text-muted" style="font-size:3rem; opacity:0.3;"></i>
+            <p class="mt-3 mb-0 fw-semibold" style="font-size:0.95rem;">No chapters added yet for this novel.</p>
+            <p class="small text-secondary mt-1 mb-3">Get started by creating the first chapter!</p>
+            <a href="/Admin/Chapter/Create?novelId=@ViewBag.NovelId" class="tsuki-btn-ghost btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> Add First Chapter
+            </a>
+        </div>
+    }
+}
+
 <partial name="_ValidationScriptsPartial" />
 <script>
     document.addEventListener('DOMContentLoaded', function () {

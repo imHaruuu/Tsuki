@@ -6,10 +6,15 @@
     string formAction = isEdit ? "Edit" : "Create";
     string btnLabel   = isEdit ? "Save Changes" : "Create Chapter";
     var novelList     = new SelectList(Model.AvailableNovels, "Id", "Title");
+
+    // Smart back link
+    string backUrl = ViewBag.ReturnNovelId != null 
+        ? $"/Admin/Novel/Edit/{ViewBag.ReturnNovelId}" 
+        : Url.Action("Index") ?? "/Admin/Chapter";
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
-    <a asp-action="Index" class="tsuki-btn-ghost">
+    <a href="@backUrl" class="tsuki-btn-ghost">
         <i class="bi bi-arrow-left me-1"></i> Back
     </a>
     <h1 class="section-title mb-0">@pageTitle</h1>
