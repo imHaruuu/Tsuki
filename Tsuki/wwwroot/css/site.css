@@ -497,6 +497,61 @@ img { max-width: 100%; }
     margin-bottom: 2rem;
 }
 
+/* ── Hero greeting ──────────────────────────────────────── */
+.hero-greeting {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    opacity: 0;
+    animation: fadeSlideUp 0.6s ease forwards;
+}
+.hero-greeting .bi { color: var(--accent-gold); font-size: 1rem; }
+.hero-username {
+    color: var(--accent-gold);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* ── Hero moonlight quote ───────────────────────────────── */
+.hero-quote {
+    border: none;
+    padding: 0.75rem 0 0.75rem 1rem;
+    margin: 0 0 1.5rem;
+    border-left: 2px solid rgba(245, 198, 101, 0.35);
+    background: transparent;
+    opacity: 0;
+    animation: fadeSlideUp 0.7s ease 0.15s forwards;
+}
+.hero-quote-text {
+    display: block;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: rgba(200, 210, 240, 0.88);
+    line-height: 1.65;
+    margin-bottom: 0.35rem;
+    transition: opacity 0.5s ease;
+}
+.hero-quote-author {
+    display: block;
+    font-size: 0.78rem;
+    font-style: normal;
+    color: var(--accent-gold);
+    opacity: 0.75;
+    letter-spacing: 0.04em;
+}
+.hero-quote.fading { opacity: 0; transition: opacity 0.4s ease; }
+.hero-quote.visible { opacity: 1; transition: opacity 0.4s ease; }
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+
 .hero-stats {
     display: flex;
     gap: 2.5rem;

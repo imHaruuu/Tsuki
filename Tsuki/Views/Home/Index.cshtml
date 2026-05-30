@@ -1,7 +1,16 @@
+@inject UserManager<ApplicationUser> UserManager
 @{
     ViewData["Title"] = "Home";
     var featured = ViewBag.FeaturedNovels as List<NovelCardViewModel> ?? new List<NovelCardViewModel>();
     var recent   = ViewBag.RecentNovels   as List<NovelCardViewModel> ?? new List<NovelCardViewModel>();
+
+    // Lấy DisplayName thật của user, không dùng email
+    ApplicationUser? currentUser = null;
+    if (User.Identity?.IsAuthenticated == true)
+        currentUser = await UserManager.GetUserAsync(User);
+    var displayName = currentUser?.DisplayName?.Trim();
+    if (string.IsNullOrEmpty(displayName))
+        displayName = User.Identity?.IsAuthenticated == true ? (User.Identity.Name ?? "bạn") : "bạn";
 }
 
 <!-- ── Hero Section ────────────────────────────────────────────── -->
@@ -9,6 +18,17 @@
     <div class="container position-relative" style="z-index:1">
         <div class="row align-items-center">
             <div class="col-lg-7">
+                <!-- Greeting -->
+                <p class="hero-greeting" id="hero-greeting">
+                    <i class="bi bi-moon-stars-fill me-2"></i>Xin chào, <span class="hero-username">@displayName</span>
+                </p>
+
+                <!-- Random moonlight quote (populated via JS) -->
+                <blockquote class="hero-quote" id="hero-quote">
+                    <span class="hero-quote-text" id="hero-quote-text"></span>
+                    <cite class="hero-quote-author" id="hero-quote-author"></cite>
+                </blockquote>
+
                 <h1 class="hero-title">Endless Stories,<br />One Click Away</h1>
                 <p class="hero-subtitle">
                     Dive into thousands of light novels, web novels, and fantasy epics.
@@ -137,3 +157,65 @@
         <a asp-controller="Novel" asp-action="Index" class="tsuki-btn-primary mt-2">Browse Library</a>
     </div>
 }
+
+<!-- ── Moonlight Quotes ───────────────────────────────────────── -->
+<script>
+(function () {
+    const QUOTES = [
+        { text: "The moon does not fight. It attacks no one. It does not worry. It does not try to crush others. It keeps to its course, but by its very nature, it gently influences.", author: "Deng Ming-Dao" },
+        { text: "Don't tell me the moon is shining; show me the glint of light on broken glass.", author: "Anton Chekhov" },
+        { text: "The moon is a loyal companion. It never leaves. It's always there, watching, full and shining, and we don't have to worry because we know it will always be there.", author: "Tahereh Mafi" },
+        { text: "We are all like the bright moon, we still have our darker side.", author: "Khalil Gibran" },
+        { text: "Moonlight is sculpture; sunlight is painting.", author: "Nathaniel Hawthorne" },
+        { text: "Always remember we are under the same sky, looking at the same moon.", author: "Maxine Lee" },
+        { text: "The moon is the reflection of your heart and moonlight is the twinkle of your love.", author: "Debasish Mridha" },
+        { text: "Three things cannot be long hidden: the sun, the moon, and the truth.", author: "Gautama Buddha" },
+        { text: "Moonlight drowns out all but the brightest stars.", author: "J.R.R. Tolkien" },
+        { text: "The moon puts on an elegant show, different every time in shape, colour, and nuance.", author: "Arthur Smith" },
+        { text: "Be both soft and wild. Just like the moon. Or the storm. Or the sea.", author: "Victoria Erickson" },
+        { text: "The moon is a friend for the lonesome to talk to.", author: "Carl Sandburg" },
+        { text: "Shoot for the moon. Even if you miss, you'll land among the stars.", author: "Norman Vincent Peale" },
+        { text: "The moon teaches us that even darkness can be beautiful when you find your light within it.", author: "Unknown" },
+        { text: "I like to think that the moon is there even if I am not looking at it.", author: "Albert Einstein" },
+        { text: "The moon will guide you through the night with her pearly light. She will leave a path for you to follow.", author: "Anthony T. Hincks" },
+        { text: "Even the darkest night will end and the sun will rise. But it is the moon that keeps us company through the darkness.", author: "Victor Hugo" },
+        { text: "The moon is always full. It is only our view of it that changes.", author: "Matshona Dhliwayo" },
+        { text: "When the moon is not full, the stars shine more brightly.", author: "Buganda Proverb" },
+        { text: "To the moon and back — that is how far great stories carry us.", author: "Tsuki" }
+    ];
+
+    const quoteEl  = document.getElementById('hero-quote');
+    const textEl   = document.getElementById('hero-quote-text');
+    const authorEl = document.getElementById('hero-quote-author');
+
+    if (!quoteEl || !textEl || !authorEl) return;
+
+    let currentIndex = Math.floor(Math.random() * QUOTES.length);
+
+    function showQuote(index, animate) {
+        const q = QUOTES[index];
+        if (animate) {
+            quoteEl.classList.remove('visible');
+            quoteEl.classList.add('fading');
+            setTimeout(function () {
+                textEl.textContent   = '\u201C' + q.text + '\u201D';
+                authorEl.textContent = '\u2014 ' + q.author;
+                quoteEl.classList.remove('fading');
+                quoteEl.classList.add('visible');
+            }, 420);
+        } else {
+            textEl.textContent   = '\u201C' + q.text + '\u201D';
+            authorEl.textContent = '\u2014 ' + q.author;
+            setTimeout(function () { quoteEl.classList.add('visible'); }, 700);
+        }
+    }
+
+    showQuote(currentIndex, false);
+
+    setInterval(function () {
+        currentIndex = (currentIndex + 1) % QUOTES.length;
+        showQuote(currentIndex, true);
+    }, 12000);
+})();
+</script>
+
