@@ -48,6 +48,14 @@ namespace Tsuki.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateNovelViewModel vm)
         {
+            vm.SelectedCategoryIds ??= new List<int>();
+
+            // Validate Author exists to prevent foreign key violation crash
+            if (vm.AuthorId <= 0 || !await _db.Authors.AnyAsync(a => a.Id == vm.AuthorId))
+            {
+                ModelState.AddModelError("AuthorId", "The selected author is invalid or does not exist.");
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.AvailableAuthors = await _db.Authors.OrderBy(a => a.Name).ToListAsync();
@@ -123,6 +131,14 @@ namespace Tsuki.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CreateNovelViewModel vm)
         {
+            vm.SelectedCategoryIds ??= new List<int>();
+
+            // Validate Author exists to prevent foreign key violation crash
+            if (vm.AuthorId <= 0 || !await _db.Authors.AnyAsync(a => a.Id == vm.AuthorId))
+            {
+                ModelState.AddModelError("AuthorId", "The selected author is invalid or does not exist.");
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.AvailableAuthors = await _db.Authors.OrderBy(a => a.Name).ToListAsync();
