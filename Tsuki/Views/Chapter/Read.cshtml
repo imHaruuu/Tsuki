@@ -42,9 +42,24 @@
             <span></span>
         }
 
-        <a href="@novelUrl" class="tsuki-btn-ghost" id="btn-back-to-novel">
-            <i class="bi bi-list-ul me-1"></i>Chapter List
-        </a>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="@novelUrl" class="tsuki-btn-ghost" id="btn-back-to-novel">
+                <i class="bi bi-list-ul me-1"></i>Chapter List
+            </a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                ViewBag.NovelId = Model.NovelId;
+                ViewBag.ChapterId = Model.Id;
+                ViewBag.IsBookmarked = Model.IsBookmarked;
+                <partial name="~/Views/Shared/_BookmarkButton.cshtml" />
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="tsuki-btn-ghost" id="btn-login-to-bookmark" title="Login to Bookmark">
+                    <i class="bi bi-bookmark"></i>
+                </a>
+            }
+        </div>
 
         @if (Model.NextChapterId.HasValue)
         {
@@ -124,5 +139,238 @@
             </div>
         }
     </div>
+
+    <!-- Reader settings panel -->
+    <button class="reader-settings-toggle" id="reader-settings-toggle-btn" type="button" title="Reader Settings">
+        <i class="bi bi-gear-fill"></i>
+    </button>
+
+    <div class="reader-settings-panel" id="reader-settings-panel">
+        <div class="settings-section-title">
+            <span>Reader Settings</span>
+            <button class="settings-close-btn" id="settings-close-btn" type="button">&times;</button>
+        </div>
+        
+        <!-- Theme options -->
+        <div class="settings-section">
+            <label>Theme</label>
+            <div class="theme-options">
+                <button class="theme-opt theme-opt-light" data-theme="light" type="button" title="Light Theme"></button>
+                <button class="theme-opt theme-opt-sepia" data-theme="sepia" type="button" title="Sepia Theme"></button>
+                <button class="theme-opt theme-opt-twilight active" data-theme="twilight" type="button" title="Twilight Theme"></button>
+                <button class="theme-opt theme-opt-void" data-theme="void" type="button" title="Deep Void"></button>
+            </div>
+        </div>
+        
+        <!-- Font Selection -->
+        <div class="settings-section">
+            <label>Font Style</label>
+            <div class="btn-group btn-group-sm">
+                <button class="btn tsuki-btn-ghost active" data-font="sans" type="button">Sans</button>
+                <button class="btn tsuki-btn-ghost" data-font="serif" type="button">Serif</button>
+                <button class="btn tsuki-btn-ghost" data-font="mono" type="button">Mono</button>
+            </div>
+        </div>
+        
+        <!-- Font Size -->
+        <div class="settings-section">
+            <label>Font Size</label>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <button class="btn tsuki-btn-ghost btn-sm flex-grow-1" id="font-size-dec" type="button"><i class="bi bi-dash"></i></button>
+                <span id="font-size-val" style="font-weight: 600; min-width: 3.5rem; text-align: center; color: var(--accent-gold);">100%</span>
+                <button class="btn tsuki-btn-ghost btn-sm flex-grow-1" id="font-size-inc" type="button"><i class="bi bi-plus"></i></button>
+            </div>
+        </div>
+        
+        <!-- Auto scroll -->
+        <div class="settings-section border-top pt-3 border-secondary-subtle">
+            <label class="d-flex align-items-center justify-content-between">
+                <span>Auto Scroll</span>
+                <button class="tsuki-btn-primary btn-sm px-2 py-1" id="auto-scroll-toggle-btn" type="button" style="font-size:0.75rem;">
+                    <i class="bi bi-play-fill"></i> Start
+                </button>
+            </label>
+            <div class="d-flex align-items-center justify-content-between gap-2 mt-2" id="scroll-speed-section" style="display: none !important;">
+                <button class="btn tsuki-btn-ghost btn-sm flex-grow-1" id="scroll-speed-dec" type="button"><i class="bi bi-dash"></i></button>
+                <span id="scroll-speed-val" style="font-weight: 600; min-width: 3.5rem; text-align: center; font-size:0.8rem; color: var(--accent-blue);">Speed 2</span>
+                <button class="btn tsuki-btn-ghost btn-sm flex-grow-1" id="scroll-speed-inc" type="button"><i class="bi bi-plus"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // 1. Get DOM elements
+            const readerWrap = document.getElementById('reader-wrap');
+            const readerContent = document.getElementById('chapter-content');
+            const settingsPanel = document.getElementById('reader-settings-panel');
+            const toggleBtn = document.getElementById('reader-settings-toggle-btn');
+            const closeBtn = document.getElementById('settings-close-btn');
+
+            if (!readerWrap || !readerContent) return;
+
+            // 2. Load and Apply settings from localStorage
+            const savedTheme = localStorage.getItem('reader-theme') || 'twilight';
+            const savedFont = localStorage.getItem('reader-font') || 'sans';
+            const savedFontSize = parseInt(localStorage.getItem('reader-font-size') || '100');
+
+            applyTheme(savedTheme);
+            applyFont(savedFont);
+            applyFontSize(savedFontSize);
+
+            // 3. Theme Toggle Handlers
+            settingsPanel.querySelectorAll('.theme-opt').forEach(opt => {
+                opt.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const theme = this.getAttribute('data-theme');
+                    applyTheme(theme);
+                    localStorage.setItem('reader-theme', theme);
+                });
+            });
+
+            // 4. Font Toggle Handlers
+            settingsPanel.querySelectorAll('[data-font]').forEach(opt => {
+                opt.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const font = this.getAttribute('data-font');
+                    applyFont(font);
+                    localStorage.setItem('reader-font', font);
+                });
+            });
+
+            // 5. Font Size Handlers
+            let currentFontSize = savedFontSize;
+            const fontSizeVal = document.getElementById('font-size-val');
+            document.getElementById('font-size-dec').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (currentFontSize > 70) {
+                    currentFontSize -= 10;
+                    applyFontSize(currentFontSize);
+                    localStorage.setItem('reader-font-size', currentFontSize);
+                }
+            });
+            document.getElementById('font-size-inc').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (currentFontSize < 180) {
+                    currentFontSize += 10;
+                    applyFontSize(currentFontSize);
+                    localStorage.setItem('reader-font-size', currentFontSize);
+                }
+            });
+
+            // Helpers
+            function applyTheme(theme) {
+                readerWrap.classList.remove('theme-light', 'theme-sepia', 'theme-twilight', 'theme-void');
+                readerWrap.classList.add('theme-' + theme);
+                settingsPanel.querySelectorAll('.theme-opt').forEach(opt => {
+                    opt.classList.toggle('active', opt.getAttribute('data-theme') === theme);
+                });
+            }
+
+            function applyFont(font) {
+                readerContent.classList.remove('font-sans', 'font-serif', 'font-mono');
+                readerContent.classList.add('font-' + font);
+                settingsPanel.querySelectorAll('[data-font]').forEach(opt => {
+                    opt.classList.toggle('active', opt.getAttribute('data-font') === font);
+                });
+            }
+
+            function applyFontSize(size) {
+                readerContent.style.fontSize = size + '%';
+                if (fontSizeVal) fontSizeVal.textContent = size + '%';
+            }
+
+            // Toggle Settings Panel Visibility
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    settingsPanel.classList.toggle('open');
+                });
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    settingsPanel.classList.remove('open');
+                });
+            }
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if (settingsPanel && !settingsPanel.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                    settingsPanel.classList.remove('open');
+                }
+            });
+
+            // 6. Auto Scroll Logic
+            let isScrolling = false;
+            let scrollInterval = null;
+            let scrollSpeed = parseInt(localStorage.getItem('reader-scroll-speed') || '2');
+            const scrollIntervalMs = 50;
+
+            const scrollToggleBtn = document.getElementById('auto-scroll-toggle-btn');
+            const scrollSpeedSection = document.getElementById('scroll-speed-section');
+            const scrollSpeedVal = document.getElementById('scroll-speed-val');
+
+            if (scrollSpeedVal) scrollSpeedVal.textContent = 'Speed ' + scrollSpeed;
+
+            if (scrollToggleBtn) {
+                scrollToggleBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (isScrolling) {
+                        stopAutoScroll();
+                    } else {
+                        startAutoScroll();
+                    }
+                });
+            }
+
+            document.getElementById('scroll-speed-dec').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (scrollSpeed > 1) {
+                    scrollSpeed -= 1;
+                    if (scrollSpeedVal) scrollSpeedVal.textContent = 'Speed ' + scrollSpeed;
+                    localStorage.setItem('reader-scroll-speed', scrollSpeed);
+                    if (isScrolling) startAutoScroll();
+                }
+            });
+
+            document.getElementById('scroll-speed-inc').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (scrollSpeed < 10) {
+                    scrollSpeed += 1;
+                    if (scrollSpeedVal) scrollSpeedVal.textContent = 'Speed ' + scrollSpeed;
+                    localStorage.setItem('reader-scroll-speed', scrollSpeed);
+                    if (isScrolling) startAutoScroll();
+                }
+            });
+
+            function startAutoScroll() {
+                isScrolling = true;
+                if (scrollToggleBtn) scrollToggleBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
+                if (scrollSpeedSection) scrollSpeedSection.style.setProperty('display', 'flex', 'important');
+                
+                if (scrollInterval) clearInterval(scrollInterval);
+                scrollInterval = setInterval(() => {
+                    window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+                    if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 2) {
+                        stopAutoScroll();
+                    }
+                }, scrollIntervalMs);
+            }
+
+            function stopAutoScroll() {
+                isScrolling = false;
+                if (scrollToggleBtn) scrollToggleBtn.innerHTML = '<i class="bi bi-play-fill"></i> Start';
+                if (scrollInterval) {
+                    clearInterval(scrollInterval);
+                    scrollInterval = null;
+                }
+            }
+
+            // Clean up scroll on unload / swap
+            document.addEventListener('htmx:beforeSwap', () => {
+                stopAutoScroll();
+            });
+        })();
+    </script>
 </div>
 </div><!-- /reader-page -->

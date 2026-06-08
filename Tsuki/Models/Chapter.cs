@@ -15,5 +15,6 @@ namespace Tsuki.Models
         // Navigation
         public Novel Novel { get; set; } = null!;
         public ICollection<ReadingHistory> ReadingHistories { get; set; } = new List<ReadingHistory>();
+        public ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
     }
 }

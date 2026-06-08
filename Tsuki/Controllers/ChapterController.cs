@@ -10,11 +10,13 @@ namespace Tsuki.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IReadingHistoryService _historyService;
+        private readonly IBookmarkService _bookmarkService;
 
-        public ChapterController(ApplicationDbContext db, IReadingHistoryService historyService)
+        public ChapterController(ApplicationDbContext db, IReadingHistoryService historyService, IBookmarkService bookmarkService)
         {
             _db = db;
             _historyService = historyService;
+            _bookmarkService = bookmarkService;
         }
 
         // GET: /Chapter/Read/5
@@ -48,6 +50,18 @@ namespace Tsuki.Controllers
                 ? rawContent
                 : PlainTextToHtml(rawContent);
 
+            bool isBookmarked = false;
+            // Record reading history if user is logged in
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    await _historyService.RecordHistoryAsync(userId, chapter.NovelId, chapter.Id);
+                    isBookmarked = await _bookmarkService.IsBookmarkedAsync(userId, chapter.Id);
+                }
+            }
+
             var vm = new ChapterReadViewModel
             {
                 Id = chapter.Id,
@@ -62,16 +76,9 @@ namespace Tsuki.Controllers
                 PrevChapterId = prev?.Id,
                 NextChapterId = next?.Id,
                 PrevChapterNumber = prev?.ChapterNumber,
-                NextChapterNumber = next?.ChapterNumber
+                NextChapterNumber = next?.ChapterNumber,
+                IsBookmarked = isBookmarked
             };
-
-            // Record reading history if user is logged in
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (userId != null)
-                    await _historyService.RecordHistoryAsync(userId, chapter.NovelId, chapter.Id);
-            }
 
             // If HTMX request, return partial view (just reader-wrap div)
             bool isHtmx = Request.Headers.ContainsKey("HX-Request");

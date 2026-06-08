@@ -10,5 +10,6 @@ namespace Tsuki.Models
         // Navigation
         public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
         public ICollection<ReadingHistory> ReadingHistories { get; set; } = new List<ReadingHistory>();
+        public ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
     }
 }

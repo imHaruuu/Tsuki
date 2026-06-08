@@ -24,5 +24,8 @@ namespace Tsuki.ViewModels
         public int? NextChapterId { get; set; }
         public int? PrevChapterNumber { get; set; }
         public int? NextChapterNumber { get; set; }
+
+        // Bookmark state
+        public bool IsBookmarked { get; set; }
     }
 }

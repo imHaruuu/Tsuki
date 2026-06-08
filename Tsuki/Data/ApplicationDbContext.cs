@@ -18,6 +18,7 @@ namespace Tsuki.Data
         public DbSet<NovelCategory> NovelCategories { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<ReadingHistory> ReadingHistories { get; set; }
+        public DbSet<Bookmark> Bookmarks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -50,6 +51,11 @@ namespace Tsuki.Data
             // Ensure only one reading history entry per user per novel
             builder.Entity<ReadingHistory>()
                 .HasIndex(r => new { r.UserId, r.NovelId })
+                .IsUnique();
+
+            // Ensure only one bookmark per user per novel
+            builder.Entity<Bookmark>()
+                .HasIndex(b => new { b.UserId, b.NovelId })
                 .IsUnique();
         }
     }

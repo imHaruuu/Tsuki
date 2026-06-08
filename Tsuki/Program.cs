@@ -79,6 +79,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<INovelService, NovelService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
+builder.Services.AddScoped<IBookmarkService, BookmarkService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 
 // ─── MVC ─────────────────────────────────────────────────────────────────────

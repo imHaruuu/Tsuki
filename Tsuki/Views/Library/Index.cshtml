@@ -1,0 +1,232 @@
+@model Tsuki.ViewModels.LibraryViewModel
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    ViewData["Title"] = "My Library";
+    var user = await UserManager.GetUserAsync(User);
+    var displayName = user?.DisplayName ?? User.Identity?.Name;
+}
+
+<div class="library-header">
+    <div class="container">
+        <div class="library-user-card">
+            <div class="library-avatar">
+                <i class="bi bi-person"></i>
+            </div>
+            <div>
+                <h1 class="mb-1" style="font-family: var(--font-display); font-weight: 700;">@displayName's Library</h1>
+                <p class="text-muted mb-0">Track your favorite novels, bookmarked chapters, and reading history.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <!-- Tabs Nav -->
+    <ul class="nav library-tab-nav" id="libraryTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="favorites-tab" data-bs-toggle="tab" data-bs-target="#favorites" type="button" role="tab" aria-controls="favorites" aria-selected="true">
+                <i class="bi bi-heart-fill me-2 text-danger"></i>Favorites (@Model.FavoriteNovels.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="bookmarks-tab" data-bs-toggle="tab" data-bs-target="#bookmarks" type="button" role="tab" aria-controls="bookmarks" aria-selected="false">
+                <i class="bi bi-bookmark-fill me-2 text-gold"></i>Bookmarks (@Model.BookmarkedChapters.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
+                <i class="bi bi-clock-history me-2 text-info"></i>Reading History (@Model.ReadingHistories.Count)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tabs Content -->
+    <div class="tab-content" id="libraryTabsContent">
+        <!-- Favorites Tab -->
+        <div class="tab-pane fade show active" id="favorites" role="tabpanel" aria-labelledby="favorites-tab">
+            @if (Model.FavoriteNovels.Any())
+            {
+                <div class="library-list">
+                    @foreach (var fav in Model.FavoriteNovels)
+                    {
+                        var novel = fav.Novel;
+                        <div class="library-item" id="fav-novel-@novel.Id">
+                            <div class="library-item-info">
+                                @if (!string.IsNullOrEmpty(novel.CoverUrl))
+                                {
+                                    <img src="@novel.CoverUrl" alt="@novel.Title cover" class="library-item-cover" />
+                                }
+                                else
+                                {
+                                    <div class="library-item-cover d-flex align-items-center justify-content-center bg-dark text-muted" style="font-size: 1.5rem;">&#128218;</div>
+                                }
+                                <div class="library-item-details">
+                                    <a asp-controller="Novel" asp-action="Detail" asp-route-id="@novel.Id" class="library-item-title">@novel.Title</a>
+                                    <span class="library-item-meta">
+                                        <i class="bi bi-person me-1"></i> @novel.Author?.Name &nbsp;·&nbsp;
+                                        <i class="bi bi-eye me-1"></i> @novel.ViewCount.ToString("N0") views
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="library-item-actions">
+                                <a asp-controller="Novel" asp-action="Detail" asp-route-id="@novel.Id" class="tsuki-btn-outline btn-sm">
+                                    Read Info
+                                </a>
+                                <button type="button" 
+                                        class="btn-favorite favorited btn-sm"
+                                        hx-post="/Favorite/Toggle"
+                                        hx-vals='{"novelId": "@novel.Id"}'
+                                        hx-target="#fav-novel-@novel.Id"
+                                        hx-swap="delete"
+                                        title="Remove from favorites">
+                                    <i class="bi bi-heart-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-heart-broken" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="mt-3">You haven't favorited any novels yet.</p>
+                    <a asp-controller="Novel" asp-action="Index" class="tsuki-btn-primary mt-2">Explore Novels</a>
+                </div>
+            }
+        </div>
+
+        <!-- Bookmarks Tab -->
+        <div class="tab-pane fade" id="bookmarks" role="tabpanel" aria-labelledby="bookmarks-tab">
+            @if (Model.BookmarkedChapters.Any())
+            {
+                <div class="library-list">
+                    @foreach (var bookmark in Model.BookmarkedChapters)
+                    {
+                        var novel = bookmark.Novel;
+                        var chapter = bookmark.Chapter;
+                        <div class="library-item" id="bookmark-item-@chapter.Id">
+                            <div class="library-item-info">
+                                @if (!string.IsNullOrEmpty(novel.CoverUrl))
+                                {
+                                    <img src="@novel.CoverUrl" alt="@novel.Title cover" class="library-item-cover" />
+                                }
+                                else
+                                {
+                                    <div class="library-item-cover d-flex align-items-center justify-content-center bg-dark text-muted" style="font-size: 1.5rem;">&#128218;</div>
+                                }
+                                <div class="library-item-details">
+                                    <a asp-controller="Chapter" asp-action="Read" asp-route-id="@chapter.Id" class="library-item-title">
+                                        @novel.Title — Ch. @chapter.ChapterNumber: @chapter.Title
+                                    </a>
+                                    <span class="library-item-meta">
+                                        Bookmarked on <span class="local-time" data-utc="@bookmark.CreatedAt.ToString("o")">@bookmark.CreatedAt.ToString("MMM dd, yyyy HH:mm") UTC</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="library-item-actions">
+                                <a asp-controller="Chapter" asp-action="Read" asp-route-id="@chapter.Id" class="tsuki-btn-primary btn-sm">
+                                    <i class="bi bi-book-half"></i> Read
+                                </a>
+                                <button type="button" 
+                                        class="tsuki-btn-ghost btn-sm text-danger border-danger-subtle"
+                                        hx-post="/Bookmark/Remove"
+                                        hx-vals='{"novelId": "@novel.Id", "chapterId": "@chapter.Id"}'
+                                        hx-target="#bookmark-item-@chapter.Id"
+                                        hx-swap="delete"
+                                        title="Delete bookmark">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-bookmark-x" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="mt-3">You haven't bookmarked any chapters yet.</p>
+                </div>
+            }
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+            @if (Model.ReadingHistories.Any())
+            {
+                <div class="library-list">
+                    @foreach (var hist in Model.ReadingHistories)
+                    {
+                        var novel = hist.Novel;
+                        var chapter = hist.Chapter;
+                        <div class="library-item">
+                            <div class="library-item-info">
+                                @if (!string.IsNullOrEmpty(novel.CoverUrl))
+                                {
+                                    <img src="@novel.CoverUrl" alt="@novel.Title cover" class="library-item-cover" />
+                                }
+                                else
+                                {
+                                    <div class="library-item-cover d-flex align-items-center justify-content-center bg-dark text-muted" style="font-size: 1.5rem;">&#128218;</div>
+                                }
+                                <div class="library-item-details">
+                                    <a asp-controller="Novel" asp-action="Detail" asp-route-id="@novel.Id" class="library-item-title">@novel.Title</a>
+                                    <span class="library-item-meta">
+                                        Last read: <a asp-controller="Chapter" asp-action="Read" asp-route-id="@chapter.Id" style="color:var(--text-secondary); text-decoration: underline;">Ch. @chapter.ChapterNumber: @chapter.Title</a> &nbsp;·&nbsp;
+                                        <span class="local-time" data-utc="@hist.LastReadAt.ToString("o")">@hist.LastReadAt.ToString("MMM dd, yyyy HH:mm") UTC</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="library-item-actions">
+                                <a asp-controller="Chapter" asp-action="Read" asp-route-id="@chapter.Id" class="tsuki-btn-primary btn-sm">
+                                    Continue
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-clock-history" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p class="mt-3">Your reading history is empty.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function formatLocalTimes() {
+            document.querySelectorAll('.local-time').forEach(el => {
+                const utcStr = el.getAttribute('data-utc');
+                if (utcStr) {
+                    const date = new Date(utcStr);
+                    if (!isNaN(date.getTime())) {
+                        const formatted = date.toLocaleString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        el.textContent = formatted;
+                        el.classList.remove('local-time'); // Avoid double formatting
+                    }
+                }
+            });
+        }
+
+        // Run format on page load
+        formatLocalTimes();
+
+        // Run format after HTMX content swaps
+        document.body.addEventListener('htmx:afterSwap', function() {
+            formatLocalTimes();
+        });
+    </script>
+}

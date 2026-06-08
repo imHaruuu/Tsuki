@@ -1,0 +1,23 @@
+@{
+    int novelId = (int)(ViewBag.NovelId ?? 0);
+    int chapterId = (int)(ViewBag.ChapterId ?? 0);
+    bool isBookmarked = (bool)(ViewBag.IsBookmarked ?? false);
+
+    string bookmarkClass = isBookmarked ? "bookmarked" : "";
+    string iconClass     = isBookmarked ? "bi-bookmark-fill" : "bi-bookmark";
+    string btnLabel      = isBookmarked ? "Bookmarked" : "Bookmark";
+    string ariaLabel     = isBookmarked ? "Remove bookmark" : "Add bookmark";
+    string toggleUrl     = Url.Action("Toggle", "Bookmark") ?? "/Bookmark/Toggle";
+    string hxVals        = $"{{\"novelId\": \"{novelId}\", \"chapterId\": \"{chapterId}\"}}";
+}
+
+<button type="button"
+        class="btn-bookmark @bookmarkClass"
+        hx-post="@toggleUrl"
+        hx-vals="@hxVals"
+        hx-target="this"
+        hx-swap="outerHTML"
+        aria-label="@ariaLabel">
+    <i class="bi @iconClass"></i>
+    <span>@btnLabel</span>
+</button>
