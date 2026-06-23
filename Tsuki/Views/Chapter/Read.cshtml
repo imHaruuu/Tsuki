@@ -204,6 +204,37 @@
             <button class="btn tsuki-btn-ghost btn-sm flex-grow-1" id="scroll-speed-inc" type="button"><i class="bi bi-plus"></i></button>
         </div>
     </div>
+
+    <!-- Text-to-Speech -->
+    <div class="settings-section">
+        <label class="d-flex align-items-center justify-content-between">
+            <span>Text to Speech</span>
+            <button class="tsuki-btn-primary btn-sm px-2 py-1" id="tts-toggle-btn" type="button" style="font-size:0.75rem;">
+                <i class="bi bi-play-fill"></i> Read
+            </button>
+        </label>
+
+        <!-- Speed -->
+        <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+            <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Speed</span>
+            <button class="btn tsuki-btn-ghost btn-sm" id="tts-speed-dec" type="button"><i class="bi bi-dash"></i></button>
+            <span id="tts-speed-val" style="font-weight:600;min-width:2.5rem;text-align:center;font-size:0.8rem;color:var(--accent-gold);">1.0x</span>
+            <button class="btn tsuki-btn-ghost btn-sm" id="tts-speed-inc" type="button"><i class="bi bi-plus"></i></button>
+        </div>
+
+        <!-- Voice -->
+        <div class="mt-2">
+            <select id="tts-voice-select" class="form-select form-select-sm" style="background:var(--surface-card);color:var(--text-primary);border-color:var(--border-subtle);font-size:0.75rem;"></select>
+        </div>
+
+        <!-- Volume -->
+        <div class="d-flex align-items-center gap-2 mt-2">
+            <i class="bi bi-volume-down" style="font-size:0.85rem;color:var(--text-muted);flex-shrink:0;"></i>
+            <input type="range" id="tts-volume-slider" min="0" max="1" step="0.05" value="1"
+                   style="flex:1;accent-color:var(--accent-gold);cursor:pointer;height:4px;">
+            <i class="bi bi-volume-up" style="font-size:0.85rem;color:var(--text-muted);flex-shrink:0;"></i>
+        </div>
+    </div>
     </div><!-- /reader-settings-inner -->
 </div>
 
@@ -426,7 +457,10 @@
             }
 
             // Clean up on HTMX swap
-            document.addEventListener('htmx:beforeSwap', () => stopAutoScroll());
+            document.addEventListener('htmx:beforeSwap', () => {
+                stopAutoScroll();
+                ttsStop();
+            });
 
             // Re-apply settings on HTMX swap
             document.body.addEventListener('htmx:afterSwap', (evt) => {
@@ -438,12 +472,202 @@
                     applyTheme(currentTheme);
                     applyFont(currentFont);
                     applyFontSize(currentFontSize);
-                    
+
                     if (progressBar) {
                         progressBar.style.width = '0%';
                     }
                 }
             });
+
+            // ── Text-to-Speech ────────────────────────────────────────
+            const ttsToggleBtn    = document.getElementById('tts-toggle-btn');
+            const ttsSpeedDec     = document.getElementById('tts-speed-dec');
+            const ttsSpeedInc     = document.getElementById('tts-speed-inc');
+            const ttsSpeedVal     = document.getElementById('tts-speed-val');
+            const ttsVoiceSelect  = document.getElementById('tts-voice-select');
+            const ttsVolumeSlider = document.getElementById('tts-volume-slider');
+
+            const TTS_SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+            let ttsSpeedIdx  = parseInt(localStorage.getItem('tts-speed-idx') || '2');
+            let ttsVolume    = parseFloat(localStorage.getItem('tts-volume') || '1');
+            let ttsVoices    = [];
+            let ttsActive    = false;
+            let ttsCharIndex = 0;   // tracks current read position via boundary event
+            let ttsFullText  = '';  // full chapter text cached at ttsStart()
+
+            function ttsGetText() {
+                const article = document.getElementById('chapter-content');
+                return article ? (article.innerText || article.textContent || '') : '';
+            }
+
+            function ttsUpdateSpeedUI() {
+                if (ttsSpeedVal) ttsSpeedVal.textContent = TTS_SPEEDS[ttsSpeedIdx].toFixed(2).replace(/\.?0+$/, '') + 'x';
+            }
+
+            function ttsPopulateVoices() {
+                ttsVoices = window.speechSynthesis.getVoices();
+                if (!ttsVoiceSelect) return;
+                const savedUri = localStorage.getItem('tts-voice-uri') || '';
+                ttsVoiceSelect.innerHTML = '';
+
+                // Prefer Vietnamese voices first
+                const viVoices  = ttsVoices.filter(v => v.lang.startsWith('vi'));
+                const enVoices  = ttsVoices.filter(v => v.lang.startsWith('en'));
+                const othVoices = ttsVoices.filter(v => !v.lang.startsWith('vi') && !v.lang.startsWith('en'));
+                const ordered   = [...viVoices, ...enVoices, ...othVoices];
+
+                ordered.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.voiceURI;
+                    opt.textContent = `${v.name} (${v.lang})`;
+                    if (v.voiceURI === savedUri) opt.selected = true;
+                    ttsVoiceSelect.appendChild(opt);
+                });
+
+                // Default to first Vietnamese voice if nothing saved
+                if (!savedUri && viVoices.length > 0) {
+                    ttsVoiceSelect.value = viVoices[0].voiceURI;
+                }
+            }
+
+            function ttsGetSelectedVoice() {
+                if (!ttsVoiceSelect) return null;
+                const uri = ttsVoiceSelect.value;
+                return ttsVoices.find(v => v.voiceURI === uri) || null;
+            }
+
+            // ttsStartFrom: speak from a given char offset in ttsFullText
+            function ttsStartFrom(charOffset) {
+                window.speechSynthesis.cancel();
+
+                const remaining = ttsFullText.substring(charOffset).trim();
+                if (!remaining) return;
+
+                const utter = new SpeechSynthesisUtterance(remaining);
+                utter.rate   = TTS_SPEEDS[ttsSpeedIdx];
+                utter.volume = ttsVolume;
+                utter.pitch  = 1;
+
+                const voice = ttsGetSelectedVoice();
+                if (voice) utter.voice = voice;
+
+                // Track position: boundary charIndex is relative to this utterance's text,
+                // so we add charOffset to keep it absolute within ttsFullText.
+                utter.addEventListener('boundary', (e) => {
+                    if (e.charIndex !== undefined) {
+                        ttsCharIndex = charOffset + e.charIndex;
+                    }
+                });
+
+                utter.onstart = () => {
+                    ttsActive = true;
+                    if (ttsToggleBtn) ttsToggleBtn.innerHTML = '<i class="bi bi-stop-fill"></i> Stop';
+                };
+                utter.onend = utter.onerror = () => {
+                    ttsActive = false;
+                    ttsCharIndex = 0;
+                    if (ttsToggleBtn) ttsToggleBtn.innerHTML = '<i class="bi bi-play-fill"></i> Read';
+                };
+
+                window.speechSynthesis.speak(utter);
+            }
+
+            function ttsStart() {
+                if (!('speechSynthesis' in window)) {
+                    alert('Trình duyệt của bạn không hỗ trợ Text-to-Speech.');
+                    return;
+                }
+                ttsFullText  = ttsGetText().trim();
+                ttsCharIndex = 0;
+                ttsStartFrom(0);
+            }
+
+            function ttsStop() {
+                window.speechSynthesis && window.speechSynthesis.cancel();
+                ttsActive    = false;
+                ttsCharIndex = 0;
+                if (ttsToggleBtn) ttsToggleBtn.innerHTML = '<i class="bi bi-play-fill"></i> Read';
+            }
+
+            // Init voices (Chrome fires voiceschanged asynchronously)
+            if ('speechSynthesis' in window) {
+                ttsPopulateVoices();
+                window.speechSynthesis.addEventListener('voiceschanged', ttsPopulateVoices);
+            }
+
+            // Restore volume slider
+            if (ttsVolumeSlider) ttsVolumeSlider.value = ttsVolume;
+            ttsUpdateSpeedUI();
+
+            if (ttsToggleBtn) {
+                ttsToggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (ttsActive) { ttsStop(); } else { ttsStart(); }
+                });
+            }
+
+            if (ttsSpeedDec) {
+                ttsSpeedDec.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (ttsSpeedIdx > 0) {
+                        ttsSpeedIdx--;
+                        ttsUpdateSpeedUI();
+                        localStorage.setItem('tts-speed-idx', ttsSpeedIdx);
+                        // Resume from current position with new speed
+                        if (ttsActive) {
+                            const resumeAt = ttsCharIndex;
+                            window.speechSynthesis.cancel();
+                            ttsStartFrom(resumeAt);
+                        }
+                    }
+                });
+            }
+
+            if (ttsSpeedInc) {
+                ttsSpeedInc.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (ttsSpeedIdx < TTS_SPEEDS.length - 1) {
+                        ttsSpeedIdx++;
+                        ttsUpdateSpeedUI();
+                        localStorage.setItem('tts-speed-idx', ttsSpeedIdx);
+                        // Resume from current position with new speed
+                        if (ttsActive) {
+                            const resumeAt = ttsCharIndex;
+                            window.speechSynthesis.cancel();
+                            ttsStartFrom(resumeAt);
+                        }
+                    }
+                });
+            }
+
+            if (ttsVoiceSelect) {
+                ttsVoiceSelect.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    localStorage.setItem('tts-voice-uri', ttsVoiceSelect.value);
+                    // Resume from current position with new voice
+                    if (ttsActive) {
+                        const resumeAt = ttsCharIndex;
+                        window.speechSynthesis.cancel();
+                        ttsStartFrom(resumeAt);
+                    }
+                });
+            }
+
+            if (ttsVolumeSlider) {
+                ttsVolumeSlider.addEventListener('input', (e) => {
+                    e.stopPropagation();
+                    ttsVolume = parseFloat(ttsVolumeSlider.value);
+                    localStorage.setItem('tts-volume', ttsVolume);
+                    // Volume cannot be changed on a live utterance in Web Speech API,
+                    // so we resume from the tracked char position — no full restart.
+                    if (ttsActive) {
+                        const resumeAt = ttsCharIndex;
+                        window.speechSynthesis.cancel();
+                        ttsStartFrom(resumeAt);
+                    }
+                });
+            }
+            // ── End TTS ───────────────────────────────────────────────
         })();
     </script>
 }
