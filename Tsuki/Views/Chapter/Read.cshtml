@@ -462,21 +462,35 @@
                 ttsStop();
             });
 
-            // Re-apply settings on HTMX swap
-            document.body.addEventListener('htmx:afterSwap', (evt) => {
-                if (evt.detail.target && evt.detail.target.id === 'reader-wrap') {
-                    const currentTheme = localStorage.getItem('reader-theme') || 'twilight';
-                    const currentFont = localStorage.getItem('reader-font') || 'sans';
-                    const currentFontSize = parseInt(localStorage.getItem('reader-font-size') || '100');
+            // Re-apply settings after HTMX chapter swap.
+            // Using htmx:afterSettle (not afterSwap) because outerHTML swap removes
+            // the old element before afterSwap fires — afterSettle guarantees the
+            // new #reader-wrap is fully integrated into the DOM.
+            document.body.addEventListener('htmx:afterSettle', () => {
+                const newWrap = document.getElementById('reader-wrap');
+                if (!newWrap) return;
 
-                    applyTheme(currentTheme);
-                    applyFont(currentFont);
-                    applyFontSize(currentFontSize);
+                // Check if the new element is missing theme classes (freshly swapped from partial)
+                const hasTheme = newWrap.classList.contains('theme-light') ||
+                                 newWrap.classList.contains('theme-sepia') ||
+                                 newWrap.classList.contains('theme-twilight') ||
+                                 newWrap.classList.contains('theme-void');
+                if (hasTheme) return; // Already styled, nothing to do
 
-                    if (progressBar) {
-                        progressBar.style.width = '0%';
-                    }
+                const currentTheme = localStorage.getItem('reader-theme') || 'twilight';
+                const currentFont = localStorage.getItem('reader-font') || 'sans';
+                const currentSize = parseInt(localStorage.getItem('reader-font-size') || '100');
+
+                applyTheme(currentTheme);
+                applyFont(currentFont);
+                applyFontSize(currentSize);
+
+                if (progressBar) {
+                    progressBar.style.width = '0%';
                 }
+
+                // Scroll to top of the new chapter
+                window.scrollTo({ top: 0, behavior: 'instant' });
             });
 
             // ── Text-to-Speech ────────────────────────────────────────
